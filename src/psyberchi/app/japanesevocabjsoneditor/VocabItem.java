@@ -5,10 +5,13 @@
  */
 package psyberchi.app.japanesevocabjsoneditor;
 
+import org.json.simple.JSONAware;
+import org.json.simple.JSONObject;
+
 /**
  * @author Kendall Conrad
  */
-public class VocabItem {
+public class VocabItem implements JSONAware {
 
 	private int lesson;
 	private String english;
@@ -51,11 +54,16 @@ public class VocabItem {
 	 * Returns a JSON formatted String representing the vocabulary item.
 	 * @return
 	 */
-	public String toJsonString() {
-		String ss = String.format("{\"en\": \"%s\","
-				+ " \"ro\": \"%s\", \"kn\": \"%s\","
-				+ " \"kj\": \"%s\", \"ln\": %d}",
-				getEnglish(), getRomanji(), getKana(), getKanji(), getLesson());
+	@Override
+	public String toJSONString() {
+		String ss = String.format("{\"en\":\"%s\","
+				+ " \"ro\":\"%s\", \"kn\":\"%s\","
+				+ " \"kj\":\"%s\", \"ln\":%d}",
+				JSONObject.escape(getEnglish()),
+				JSONObject.escape(getRomanji()),
+				JSONObject.escape(getKana()),
+				JSONObject.escape(getKanji()),
+				getLesson());
 		return ss;
 	}
 

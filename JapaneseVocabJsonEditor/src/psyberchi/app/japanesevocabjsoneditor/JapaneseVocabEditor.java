@@ -39,103 +39,107 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
     private void initComponents() {
 
         jToolBar = new javax.swing.JToolBar();
-        jButton1 = new javax.swing.JButton();
+        jButtonToolbarSave = new javax.swing.JButton();
         jPanelMain = new javax.swing.JPanel();
-        jSplitPane1 = new javax.swing.JSplitPane();
+        jSplitPane = new javax.swing.JSplitPane();
         jPanelCategories = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList();
-        jPanel3 = new javax.swing.JPanel();
-        jButton2 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
+        jScrollPaneCategories = new javax.swing.JScrollPane();
+        jListCategories = new javax.swing.JList();
+        jPanelCategoryButtons = new javax.swing.JPanel();
+        jButtonCategoryAdd = new javax.swing.JButton();
+        jButtonCategoryDelete = new javax.swing.JButton();
         jPanelRomanji = new javax.swing.JPanel();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        jList2 = new javax.swing.JList();
-        jPanel4 = new javax.swing.JPanel();
-        jButton5 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
+        jScrollPaneRomaji = new javax.swing.JScrollPane();
+        jListRomaji = new javax.swing.JList();
+        jPanelRomajiButtons = new javax.swing.JPanel();
+        jButtonRomajiAdd = new javax.swing.JButton();
+        jButtonRomajiDelete = new javax.swing.JButton();
+        jButtonRomajiMove = new javax.swing.JButton();
+        japaneseVocabEditorPanel = new psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorPanel();
         jPanelButtons = new javax.swing.JPanel();
         jMenuBar = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(600, 300));
+        setPreferredSize(new java.awt.Dimension(500, 400));
 
         jToolBar.setRollover(true);
 
-        jButton1.setText("Save");
-        jButton1.setFocusable(false);
-        jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar.add(jButton1);
+        jButtonToolbarSave.setText("Save");
+        jButtonToolbarSave.setFocusable(false);
+        jButtonToolbarSave.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonToolbarSave.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar.add(jButtonToolbarSave);
 
         getContentPane().add(jToolBar, java.awt.BorderLayout.NORTH);
 
         jPanelMain.setLayout(new java.awt.BorderLayout());
 
-        jSplitPane1.setDividerLocation(220);
-        jSplitPane1.setDividerSize(8);
-        jSplitPane1.setResizeWeight(0.5);
+        jSplitPane.setDividerLocation(220);
+        jSplitPane.setDividerSize(8);
+        jSplitPane.setResizeWeight(0.5);
 
         jPanelCategories.setLayout(new java.awt.BorderLayout());
 
-        jList1.setModel(new javax.swing.AbstractListModel() {
+        jListCategories.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane2.setViewportView(jList1);
+        jScrollPaneCategories.setViewportView(jListCategories);
 
-        jPanelCategories.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+        jPanelCategories.add(jScrollPaneCategories, java.awt.BorderLayout.CENTER);
 
-        jPanel3.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        jPanelCategoryButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
-        jButton2.setText("+");
-        jButton2.setIconTextGap(0);
-        jButton2.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        jPanel3.add(jButton2);
+        jButtonCategoryAdd.setText("+");
+        jButtonCategoryAdd.setIconTextGap(0);
+        jButtonCategoryAdd.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jPanelCategoryButtons.add(jButtonCategoryAdd);
 
-        jButton4.setText("-");
-        jButton4.setIconTextGap(0);
-        jButton4.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        jPanel3.add(jButton4);
+        jButtonCategoryDelete.setText("-");
+        jButtonCategoryDelete.setIconTextGap(0);
+        jButtonCategoryDelete.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jPanelCategoryButtons.add(jButtonCategoryDelete);
 
-        jPanelCategories.add(jPanel3, java.awt.BorderLayout.SOUTH);
+        jPanelCategories.add(jPanelCategoryButtons, java.awt.BorderLayout.SOUTH);
 
-        jSplitPane1.setLeftComponent(jPanelCategories);
+        jSplitPane.setLeftComponent(jPanelCategories);
 
         jPanelRomanji.setLayout(new java.awt.BorderLayout());
 
-        jList2.setModel(new javax.swing.AbstractListModel() {
+        jListRomaji.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane3.setViewportView(jList2);
+        jScrollPaneRomaji.setViewportView(jListRomaji);
 
-        jPanelRomanji.add(jScrollPane3, java.awt.BorderLayout.CENTER);
+        jPanelRomanji.add(jScrollPaneRomaji, java.awt.BorderLayout.CENTER);
 
-        jPanel4.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        jPanelRomajiButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
-        jButton5.setText("+");
-        jButton5.setIconTextGap(0);
-        jButton5.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        jPanel4.add(jButton5);
+        jButtonRomajiAdd.setText("+");
+        jButtonRomajiAdd.setIconTextGap(0);
+        jButtonRomajiAdd.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jPanelRomajiButtons.add(jButtonRomajiAdd);
 
-        jButton6.setText("-");
-        jButton6.setIconTextGap(0);
-        jButton6.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        jPanel4.add(jButton6);
+        jButtonRomajiDelete.setText("-");
+        jButtonRomajiDelete.setIconTextGap(0);
+        jButtonRomajiDelete.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jPanelRomajiButtons.add(jButtonRomajiDelete);
 
-        jButton7.setText("mv");
-        jPanel4.add(jButton7);
+        jButtonRomajiMove.setText("mv");
+        jPanelRomajiButtons.add(jButtonRomajiMove);
 
-        jPanelRomanji.add(jPanel4, java.awt.BorderLayout.SOUTH);
+        jPanelRomanji.add(jPanelRomajiButtons, java.awt.BorderLayout.SOUTH);
 
-        jSplitPane1.setRightComponent(jPanelRomanji);
+        jSplitPane.setRightComponent(jPanelRomanji);
 
-        jPanelMain.add(jSplitPane1, java.awt.BorderLayout.CENTER);
+        jPanelMain.add(jSplitPane, java.awt.BorderLayout.CENTER);
+
+        japaneseVocabEditorPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Vocabulary Editor"));
+        jPanelMain.add(japaneseVocabEditorPanel, java.awt.BorderLayout.SOUTH);
 
         getContentPane().add(jPanelMain, java.awt.BorderLayout.CENTER);
         getContentPane().add(jPanelButtons, java.awt.BorderLayout.SOUTH);
@@ -188,25 +192,26 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
 		});
 	}
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JList jList1;
-    private javax.swing.JList jList2;
+    private javax.swing.JButton jButtonCategoryAdd;
+    private javax.swing.JButton jButtonCategoryDelete;
+    private javax.swing.JButton jButtonRomajiAdd;
+    private javax.swing.JButton jButtonRomajiDelete;
+    private javax.swing.JButton jButtonRomajiMove;
+    private javax.swing.JButton jButtonToolbarSave;
+    private javax.swing.JList jListCategories;
+    private javax.swing.JList jListRomaji;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanelButtons;
     private javax.swing.JPanel jPanelCategories;
+    private javax.swing.JPanel jPanelCategoryButtons;
     private javax.swing.JPanel jPanelMain;
+    private javax.swing.JPanel jPanelRomajiButtons;
     private javax.swing.JPanel jPanelRomanji;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JScrollPane jScrollPaneCategories;
+    private javax.swing.JScrollPane jScrollPaneRomaji;
+    private javax.swing.JSplitPane jSplitPane;
     private javax.swing.JToolBar jToolBar;
+    private psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorPanel japaneseVocabEditorPanel;
     // End of variables declaration//GEN-END:variables
 }

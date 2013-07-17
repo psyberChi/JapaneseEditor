@@ -10,8 +10,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.json.simple.JSONArray;
@@ -27,31 +25,58 @@ public class JsonVocabIO {
 
 	private static final Logger logger = Logger.getLogger(JsonVocabIO.class.getCanonicalName());
 
-	public static boolean isValidVocabItem(JSONObject object) {
-		if (object.get("en") == null
-				|| object.get("ro") == null
-				|| object.get("kn") == null
-				|| object.get("kj") == null) {
-			return false;
+	/**
+	 * Checks the validity of a VocabItem object.
+	 *
+	 * @param vocabItem the JSONObject to check against a VocabItem structure.
+	 * @return true if the object has the properties en, ro, kn, and kj; false
+	 * otherwise.
+	 */
+	public static boolean isValidVocabItem(JSONObject vocabItem) {
+		if (vocabItem.get("en") != null
+				&& vocabItem.get("ro") != null
+				&& vocabItem.get("kn") != null
+				&& vocabItem.get("kj") != null) {
+			return true;
 		}
-		return true;
+		return false;
 	}
 
-	public static VocabModel readJsonFile(File jsonFile) throws FileNotFoundException, IOException, ParseException {
-		if (!jsonFile.exists()) {
+	/**
+	 *
+	 * @param jsonFile
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	public static VocabModel readJsonFile(File jsonFile)
+			throws FileNotFoundException, IOException, ParseException {
+		// Make sure we have something real to work with
+		if (!jsonFile.exists() || !jsonFile.canRead()) {
+			logger.log(Level.WARNING,
+					"The file ''{0}'' either does not exist or cannot be read.",
+					jsonFile);
 			return null;
 		}
 		JSONParser parser = new JSONParser();
 		Object wholeFile = parser.parse(new FileReader(jsonFile));
 		JSONObject jsonObject = (JSONObject) wholeFile;
 		VocabModel model = new VocabModel();
+		logger.log(Level.INFO, "JSON file ''{0}'' successfuly read in.",
+				jsonFile.getCanonicalPath());
+
+		int catCount = 0;
+		int vocabCount = 0;
 
 		// Go through keys, which are the categories
 		for (Object key : jsonObject.keySet()) {
 			if (key instanceof String) {
 				// Add the category
 				String cat = (String) key;
-				model.addCategory(cat);
+				if (model.addCategory(cat)) {
+					catCount++;
+				}
 
 				Object arrayPiece = jsonObject.get(key);
 				if (!(arrayPiece instanceof JSONArray)) {
@@ -64,6 +89,14 @@ public class JsonVocabIO {
 				for (Object vocabItem : objArray) {
 					try {
 						JSONObject vocabObject = (JSONObject) vocabItem;
+						// Make sure it's valid before trying to add it
+						if (!isValidVocabItem(vocabObject)) {
+							logger.log(Level.WARNING,
+									"Invalid VocabItem found. Skipping it: {0}",
+									vocabObject.toJSONString());
+							continue;
+						}
+
 						// Get lesson
 						Object lessonObject = vocabObject.get("ln");
 						int lesson = 0;
@@ -71,21 +104,21 @@ public class JsonVocabIO {
 						if (lessonObject != null) {
 							lesson = Integer.parseInt(lessonObject.toString(), 10);
 						}
+						// Create the VocabItem from the JSON
 						VocabItem item = new VocabItem(
 								vocabObject.get("en").toString(),
 								vocabObject.get("ro").toString(),
 								vocabObject.get("kn").toString(),
 								vocabObject.get("kj").toString(),
 								lesson);
-						if (item.getEnglish().equals("_")) {
-							// Category item, skip it
-//							continue;
-						}
 						if (model.addVocabItem(cat, item)) {
-							String s = String.format("%s: %s, %s, %s, %s, %d",
-									cat, item.getEnglish(), item.getRomanji(),
-									item.getKana(), item.getKanji(), item.getLesson());
-							logger.log(Level.FINE, "Added new vocab: {0}", s);
+							vocabCount++;
+							if (logger.isLoggable(Level.FINE)) {
+								String s = String.format("%s: %s, %s, %s, %s, %d",
+										cat, item.getEnglish(), item.getRomanji(),
+										item.getKana(), item.getKanji(), item.getLesson());
+								logger.log(Level.FINE, "Added new vocab: {0}", s);
+							}
 						}
 					}
 					catch (Exception ex) {
@@ -95,6 +128,8 @@ public class JsonVocabIO {
 				}
 			}
 		}
+		logger.log(Level.INFO, "Read in {0} categories and {1} vocabulary items.",
+				new Object[]{catCount, vocabCount});
 		return model;
 	}
 
@@ -114,6 +149,10 @@ public class JsonVocabIO {
 			FileWriter writer = new FileWriter(file);
 			writer.write(json);
 			writer.close();
+			logger.log(Level.INFO, "Successfully wrote JSON file to ''{0}''", file.getCanonicalPath());
+			// TODO use writer directly to avoid String creation; maybe
+//			StringWriter out = new StringWriter();
+//			model.w
 		}
 		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Problem creating JSON: {0}", ex.getLocalizedMessage());

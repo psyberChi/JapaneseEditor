@@ -42,8 +42,6 @@ public class JapaneseVocabEditorTest {
 		}
 		Logger.getAnonymousLogger().log(Level.INFO, "Starting");
 
-//		File file = new File("/Volumes/ANGELWATT/angelwatt.git/angelwatt.com/japanese/vocab_helper.json");
-//		File file = new File("/Volumes/Micro32/stuff/programming/java/apps/JapaneseVocabJsonEditor/vocab_helper.json");
 		File file = new File("test_in.json");
 //		JFileChooser chooser = new JFileChooser();
 //		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);

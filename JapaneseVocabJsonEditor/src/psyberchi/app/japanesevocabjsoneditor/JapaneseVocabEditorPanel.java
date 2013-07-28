@@ -5,17 +5,61 @@
  */
 package psyberchi.app.japanesevocabjsoneditor;
 
+import javax.swing.SpinnerNumberModel;
+
 /**
  *
  * @author Kendall Conrad
  */
 public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
+	public static final String PROP_MODIFIED = "MODIFIED";
+	private VocabItem vocabItem = null;
+
 	/**
 	 * Creates new form JapaneseVocabEditorPanel
 	 */
 	public JapaneseVocabEditorPanel() {
 		initComponents();
+	}
+
+	public void clearPanel() {
+		jTextFieldEnglish.setText("");
+		jTextFieldRomaji.setText("");
+		jTextFieldKana.setText("");
+		jTextFieldKanji.setText("");
+		jSpinnerLesson.setValue(0);
+	}
+
+	public VocabItem getVocabItem() {
+		return vocabItem;
+	}
+
+	public boolean setVocabItem(VocabItem item) {
+		if (item == null) {
+			return false;
+		}
+		vocabItem = item;
+		jTextFieldEnglish.setText(item.getEnglish());
+		jTextFieldRomaji.setText(item.getRomanji());
+		jTextFieldKana.setText(item.getKana());
+		jTextFieldKanji.setText(item.getKanji());
+		jSpinnerLesson.getModel().setValue(item.getLesson());
+		return true;
+	}
+
+	@Override
+	public void setEnabled(boolean enable) {
+		jTextFieldEnglish.setEnabled(enable);
+		jTextFieldRomaji.setEnabled(enable);
+		jTextFieldKana.setEnabled(enable);
+		jTextFieldKanji.setEnabled(enable);
+		jSpinnerLesson.setEnabled(enable);
+	}
+
+	public void setEnglish(String str) {
+		vocabItem.setEnglish(str);
+		jTextFieldEnglish.setText(str);
 	}
 
 	/**
@@ -27,117 +71,167 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
-        jTextField1 = new javax.swing.JTextField();
-        jLabel1 = new javax.swing.JLabel();
-        jPanel2 = new javax.swing.JPanel();
-        jTextField2 = new javax.swing.JTextField();
-        jLabel2 = new javax.swing.JLabel();
-        jPanel5 = new javax.swing.JPanel();
-        jTextField3 = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
-        jPanel6 = new javax.swing.JPanel();
-        jTextField4 = new javax.swing.JTextField();
-        jLabel4 = new javax.swing.JLabel();
-        jPanel7 = new javax.swing.JPanel();
-        jLabel5 = new javax.swing.JLabel();
-        jPanel3 = new javax.swing.JPanel();
-        jSpinner1 = new javax.swing.JSpinner();
+        jPanelEnglish = new javax.swing.JPanel();
+        jTextFieldEnglish = new javax.swing.JTextField();
+        jLabelEnglish = new javax.swing.JLabel();
+        jPanelRomaji = new javax.swing.JPanel();
+        jTextFieldRomaji = new javax.swing.JTextField();
+        jLabelRomaji = new javax.swing.JLabel();
+        jPanelKana = new javax.swing.JPanel();
+        jTextFieldKana = new javax.swing.JTextField();
+        jLabelKana = new javax.swing.JLabel();
+        jPanelKanji = new javax.swing.JPanel();
+        jTextFieldKanji = new javax.swing.JTextField();
+        jLabelKanji = new javax.swing.JLabel();
+        jPanelLesson = new javax.swing.JPanel();
+        jLabelLesson = new javax.swing.JLabel();
+        jPanelLessonSpinner = new javax.swing.JPanel();
+        jSpinnerLesson = new javax.swing.JSpinner();
 
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.PAGE_AXIS));
 
-        jPanel1.setLayout(new java.awt.BorderLayout());
+        jPanelEnglish.setLayout(new java.awt.BorderLayout());
 
-        jTextField1.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
-        jTextField1.setText("english");
-        jPanel1.add(jTextField1, java.awt.BorderLayout.CENTER);
+        jTextFieldEnglish.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jTextFieldEnglish.setText("english");
+        jTextFieldEnglish.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                jTextFieldEnglishFocusLost(evt);
+            }
+        });
+        jPanelEnglish.add(jTextFieldEnglish, java.awt.BorderLayout.CENTER);
 
-        jLabel1.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel1.setText("English:");
-        jLabel1.setPreferredSize(new java.awt.Dimension(80, 20));
-        jPanel1.add(jLabel1, java.awt.BorderLayout.WEST);
+        jLabelEnglish.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jLabelEnglish.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        jLabelEnglish.setText("English:");
+        jLabelEnglish.setPreferredSize(new java.awt.Dimension(80, 20));
+        jPanelEnglish.add(jLabelEnglish, java.awt.BorderLayout.WEST);
 
-        add(jPanel1);
+        add(jPanelEnglish);
 
-        jPanel2.setLayout(new java.awt.BorderLayout());
+        jPanelRomaji.setLayout(new java.awt.BorderLayout());
 
-        jTextField2.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
-        jTextField2.setText("romaji");
-        jPanel2.add(jTextField2, java.awt.BorderLayout.CENTER);
+        jTextFieldRomaji.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jTextFieldRomaji.setText("romaji");
+        jTextFieldRomaji.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                jTextFieldRomajiFocusLost(evt);
+            }
+        });
+        jPanelRomaji.add(jTextFieldRomaji, java.awt.BorderLayout.CENTER);
 
-        jLabel2.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
-        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel2.setText("Romaji:");
-        jLabel2.setPreferredSize(new java.awt.Dimension(80, 20));
-        jPanel2.add(jLabel2, java.awt.BorderLayout.WEST);
+        jLabelRomaji.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jLabelRomaji.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        jLabelRomaji.setText("Romaji:");
+        jLabelRomaji.setPreferredSize(new java.awt.Dimension(80, 20));
+        jPanelRomaji.add(jLabelRomaji, java.awt.BorderLayout.WEST);
 
-        add(jPanel2);
+        add(jPanelRomaji);
 
-        jPanel5.setLayout(new java.awt.BorderLayout());
+        jPanelKana.setLayout(new java.awt.BorderLayout());
 
-        jTextField3.setFont(new java.awt.Font("Hiragino Mincho Pro", 0, 22)); // NOI18N
-        jTextField3.setText("かな");
-        jPanel5.add(jTextField3, java.awt.BorderLayout.CENTER);
+        jTextFieldKana.setFont(new java.awt.Font("Hiragino Mincho Pro", 0, 22)); // NOI18N
+        jTextFieldKana.setText("かな");
+        jTextFieldKana.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                jTextFieldKanaFocusLost(evt);
+            }
+        });
+        jPanelKana.add(jTextFieldKana, java.awt.BorderLayout.CENTER);
 
-        jLabel3.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel3.setText("Kana:");
-        jLabel3.setPreferredSize(new java.awt.Dimension(80, 20));
-        jPanel5.add(jLabel3, java.awt.BorderLayout.WEST);
+        jLabelKana.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jLabelKana.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        jLabelKana.setText("Kana:");
+        jLabelKana.setPreferredSize(new java.awt.Dimension(80, 20));
+        jPanelKana.add(jLabelKana, java.awt.BorderLayout.WEST);
 
-        add(jPanel5);
+        add(jPanelKana);
 
-        jPanel6.setLayout(new java.awt.BorderLayout());
+        jPanelKanji.setLayout(new java.awt.BorderLayout());
 
-        jTextField4.setFont(new java.awt.Font("Hiragino Mincho Pro", 0, 22)); // NOI18N
-        jTextField4.setText("感じ");
-        jPanel6.add(jTextField4, java.awt.BorderLayout.CENTER);
+        jTextFieldKanji.setFont(new java.awt.Font("Hiragino Mincho Pro", 0, 22)); // NOI18N
+        jTextFieldKanji.setText("感じ");
+        jTextFieldKanji.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                jTextFieldKanjiFocusLost(evt);
+            }
+        });
+        jPanelKanji.add(jTextFieldKanji, java.awt.BorderLayout.CENTER);
 
-        jLabel4.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
-        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel4.setText("Kanji:");
-        jLabel4.setPreferredSize(new java.awt.Dimension(80, 20));
-        jPanel6.add(jLabel4, java.awt.BorderLayout.WEST);
+        jLabelKanji.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jLabelKanji.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        jLabelKanji.setText("Kanji:");
+        jLabelKanji.setPreferredSize(new java.awt.Dimension(80, 20));
+        jPanelKanji.add(jLabelKanji, java.awt.BorderLayout.WEST);
 
-        add(jPanel6);
+        add(jPanelKanji);
 
-        jPanel7.setLayout(new java.awt.BorderLayout());
+        jPanelLesson.setLayout(new java.awt.BorderLayout());
 
-        jLabel5.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
-        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jLabel5.setText("Lesson:");
-        jLabel5.setPreferredSize(new java.awt.Dimension(80, 20));
-        jPanel7.add(jLabel5, java.awt.BorderLayout.WEST);
+        jLabelLesson.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jLabelLesson.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
+        jLabelLesson.setText("Lesson:");
+        jLabelLesson.setPreferredSize(new java.awt.Dimension(80, 20));
+        jPanelLesson.add(jLabelLesson, java.awt.BorderLayout.WEST);
 
-        jPanel3.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        jPanelLessonSpinner.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
-        jSpinner1.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
-        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(0, 0, 100, 1));
-        jSpinner1.setPreferredSize(new java.awt.Dimension(60, 20));
-        jPanel3.add(jSpinner1);
+        jSpinnerLesson.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
+        jSpinnerLesson.setModel(new javax.swing.SpinnerNumberModel(0, 0, 100, 1));
+        jSpinnerLesson.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                jSpinnerLessonStateChanged(evt);
+            }
+        });
+        jPanelLessonSpinner.add(jSpinnerLesson);
 
-        jPanel7.add(jPanel3, java.awt.BorderLayout.CENTER);
+        jPanelLesson.add(jPanelLessonSpinner, java.awt.BorderLayout.CENTER);
 
-        add(jPanel7);
+        add(jPanelLesson);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jTextFieldEnglishFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldEnglishFocusLost
+        String oldValue = vocabItem.getEnglish();
+        String newValue = jTextFieldEnglish.getText();
+		if (!oldValue.equals(newValue)) {
+			vocabItem.setEnglish(newValue);
+			firePropertyChange(PROP_MODIFIED, oldValue, newValue);
+		}
+    }//GEN-LAST:event_jTextFieldEnglishFocusLost
+
+    private void jTextFieldRomajiFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldRomajiFocusLost
+        vocabItem.setRomanji(jTextFieldRomaji.getText());
+    }//GEN-LAST:event_jTextFieldRomajiFocusLost
+
+    private void jTextFieldKanaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldKanaFocusLost
+        vocabItem.setKana(jTextFieldKana.getText());
+    }//GEN-LAST:event_jTextFieldKanaFocusLost
+
+    private void jTextFieldKanjiFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldKanjiFocusLost
+        vocabItem.setKanji(jTextFieldKanji.getText());
+    }//GEN-LAST:event_jTextFieldKanjiFocusLost
+
+    private void jSpinnerLessonStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinnerLessonStateChanged
+        int val = ((SpinnerNumberModel) jSpinnerLesson.getModel()).getNumber().intValue();
+		vocabItem.setLesson(val);
+    }//GEN-LAST:event_jSpinnerLessonStateChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel5;
-    private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
-    private javax.swing.JSpinner jSpinner1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
+    private javax.swing.JLabel jLabelEnglish;
+    private javax.swing.JLabel jLabelKana;
+    private javax.swing.JLabel jLabelKanji;
+    private javax.swing.JLabel jLabelLesson;
+    private javax.swing.JLabel jLabelRomaji;
+    private javax.swing.JPanel jPanelEnglish;
+    private javax.swing.JPanel jPanelKana;
+    private javax.swing.JPanel jPanelKanji;
+    private javax.swing.JPanel jPanelLesson;
+    private javax.swing.JPanel jPanelLessonSpinner;
+    private javax.swing.JPanel jPanelRomaji;
+    private javax.swing.JSpinner jSpinnerLesson;
+    private javax.swing.JTextField jTextFieldEnglish;
+    private javax.swing.JTextField jTextFieldKana;
+    private javax.swing.JTextField jTextFieldKanji;
+    private javax.swing.JTextField jTextFieldRomaji;
     // End of variables declaration//GEN-END:variables
 }

@@ -104,6 +104,10 @@ public class JsonVocabIO {
 						if (lessonObject != null) {
 							lesson = Integer.parseInt(lessonObject.toString(), 10);
 						}
+						// Adjust category marker
+						if (vocabObject.get("en").equals("_")) {
+							vocabObject.put("en", "#" + cat);
+						}
 						// Create the VocabItem from the JSON
 						VocabItem item = new VocabItem(
 								vocabObject.get("en").toString(),

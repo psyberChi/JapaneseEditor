@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,12 +54,14 @@ public class VocabModel implements JSONAware {
 
 	/**
 	 * Add a new category to our collection.
+	 *
 	 * @param cat the category to add.
 	 * @return true if able to add the new category, false if it already exists.
 	 */
 	public boolean addCategory(String cat) {
 		if (!categories.containsKey(cat)) {
 			categories.put(cat, new ArrayList<VocabItem>());
+			logger.log(Level.INFO, "Adding category: {0}", cat);
 			return true;
 		}
 		return false;
@@ -65,6 +69,7 @@ public class VocabModel implements JSONAware {
 
 	/**
 	 * Add a vocabulary item to a category.
+	 *
 	 * @param cat the category to add to, which must exist already.
 	 * @param item the vocabulary item to add.
 	 * @return true if successfully added, false if the category does not exist
@@ -74,6 +79,8 @@ public class VocabModel implements JSONAware {
 		if (categories.containsKey(cat)) {
 			if (!categories.get(cat).contains(item)) {
 				categories.get(cat).add(item);
+				logger.log(Level.INFO, "Adding vocab to category {0}: {1}",
+						new Object[]{cat, item.toJSONString()});
 				return true;
 			}
 			logger.log(Level.WARNING, "Vocabulary already exist: {0}", item.getEnglish());
@@ -85,6 +92,7 @@ public class VocabModel implements JSONAware {
 
 	/**
 	 * Gets the names of the categories.
+	 *
 	 * @return
 	 */
 	public String[] getCategories() {
@@ -101,6 +109,7 @@ public class VocabModel implements JSONAware {
 
 	/**
 	 * Returns the number of categories in the model.
+	 *
 	 * @return
 	 */
 	public int getCategoryCount() {
@@ -108,13 +117,67 @@ public class VocabModel implements JSONAware {
 	}
 
 	/**
+	 * Returns and array of all lesson numbers present in the model.
+	 *
+	 * @return
+	 */
+	public List<Integer> getLessons() {
+		ArrayList<Integer> lessons = new ArrayList<Integer>();
+		for (Map.Entry<String, ArrayList<VocabItem>> set : categories.entrySet()) {
+			for (VocabItem item : set.getValue()) {
+				if (!lessons.contains(item.getLesson())) {
+					lessons.add(item.getLesson());
+				}
+			}
+		}
+		return lessons;
+	}
+
+	/**
 	 * Get the list of vocabulary for the given category.
+	 *
 	 * @param category the category to retrieve the vocabulary from.
 	 * @return the list of vocabulary of the category, null if the category
 	 * doesn't exist.
 	 */
 	public ArrayList<VocabItem> getVocabItems(String category) {
 		return categories.get(category);
+	}
+
+	/**
+	 * Removes a given VocabItem from a given category if both exist.
+	 *
+	 * @param category
+	 * @param item
+	 * @return
+	 */
+	public boolean removeVocabItem(String category, VocabItem item) {
+		if (item != null) {
+			ArrayList<VocabItem> items = categories.get(category);
+			if (items != null && items.contains(item)) {
+				logger.log(Level.INFO, "Removing vocab from category {0}: {1}",
+						new Object[]{category, item.toJSONString()});
+				return items.remove(item);
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Renames a category and copies over the vocabular items. The old name must
+	 * exist and the new name must not yet exist.
+	 *
+	 * @param oldName
+	 * @param newName
+	 * @return
+	 */
+	public boolean renameCategory(String oldName, String newName) {
+		if (categories.containsKey(oldName) && !categories.containsKey(newName)) {
+			categories.put(newName, categories.remove(oldName));
+			logger.log(Level.INFO, "Renaming category: {0} to {1}", new Object[]{oldName, newName});
+			return true;
+		}
+		return false;
 	}
 
 }

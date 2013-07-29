@@ -6,7 +6,7 @@
 package psyberchi.app.japanesevocabjsoneditor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -61,7 +61,7 @@ public class VocabModel implements JSONAware {
 	public boolean addCategory(String cat) {
 		if (!categories.containsKey(cat)) {
 			categories.put(cat, new ArrayList<VocabItem>());
-			logger.log(Level.INFO, "Adding category: {0}", cat);
+			logger.log(Level.FINE, "Adding category: {0}", cat);
 			return true;
 		}
 		return false;
@@ -79,7 +79,7 @@ public class VocabModel implements JSONAware {
 		if (categories.containsKey(cat)) {
 			if (!categories.get(cat).contains(item)) {
 				categories.get(cat).add(item);
-				logger.log(Level.INFO, "Adding vocab to category {0}: {1}",
+				logger.log(Level.FINE, "Adding vocab to category {0}: {1}",
 						new Object[]{cat, item.toJSONString()});
 				return true;
 			}
@@ -95,15 +95,15 @@ public class VocabModel implements JSONAware {
 	 *
 	 * @return
 	 */
-	public String[] getCategories() {
+	public List<String> getCategories() {
 		Set<String> keyset = categories.keySet();
 		Iterator<String> iter = keyset.iterator();
-		String[] cats = new String[keyset.size()];
+		List<String> cats = new ArrayList<String>();
 		int a = 0;
 		while (iter.hasNext()) {
-			cats[a++] = iter.next();
+			cats.add(iter.next());
 		}
-		Arrays.sort(cats);
+		Collections.sort(cats);
 		return cats;
 	}
 
@@ -134,6 +134,19 @@ public class VocabModel implements JSONAware {
 	}
 
 	/**
+	 * Returns the total number of vocabulary in the model.
+	 *
+	 * @return
+	 */
+	public int getVocabCount() {
+		int total = 0;
+		for (ArrayList<VocabItem> set : categories.values()) {
+			total += set.size();
+		}
+		return total;
+	}
+
+	/**
 	 * Get the list of vocabulary for the given category.
 	 *
 	 * @param category the category to retrieve the vocabulary from.
@@ -142,6 +155,37 @@ public class VocabModel implements JSONAware {
 	 */
 	public ArrayList<VocabItem> getVocabItems(String category) {
 		return categories.get(category);
+	}
+
+	/**
+	 * Retrieves all VocabItem that have a lesson value matching the given
+	 * lesson passed in.
+	 *
+	 * @param lesson
+	 * @return
+	 */
+	public ArrayList<VocabItem> getVocabItems(int lesson) {
+		ArrayList<VocabItem> items = new ArrayList<VocabItem>();
+		for (Map.Entry<String, ArrayList<VocabItem>> set : categories.entrySet()) {
+			for (VocabItem item : set.getValue()) {
+				// If the lesson number matches and it's not a category label
+				if (item.getLesson() == lesson && !item.getEnglish().startsWith("#")) {
+					items.add(item);
+				}
+			}
+		}
+		Collections.sort(items, new EnglishComparator());
+		return items;
+	}
+
+	/**
+	 * Returns whether or not a category exists.
+	 *
+	 * @param category
+	 * @return
+	 */
+	public boolean hasCategory(String category) {
+		return categories.containsKey(category);
 	}
 
 	/**

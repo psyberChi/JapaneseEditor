@@ -6,16 +6,20 @@
 package psyberchi.app.japanesevocabjsoneditor;
 
 import java.awt.CardLayout;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.TimerTask;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -23,7 +27,9 @@ import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
 import org.json.simple.parser.ParseException;
 
 /**
@@ -41,13 +47,26 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 	 */
 	public static Level logLevel = Level.INFO;
 	/**
+	 * The main title of the application.
+	 */
+	public static final String APP_TITLE = "Japanese Vocabulary Editor";
+	/**
+	 * The ActionListener tied to each of the MenuItem on the JPopupMenu used to
+	 * show the categories for the user to choose.
+	 */
+	private ActionListener categoryPopupListener = null;
+	/**
 	 * A container for all of the current set of vocabulary.
 	 */
 	private ArrayList<VocabItem> vocabulary = new ArrayList<VocabItem>();
 	/**
+	 * Sets whether or not we're using a timed status.
+	 */
+	private static boolean timedStatus = false;
+	/**
 	 * Whether the currently selected vocabulary item is modified.
 	 */
-	private boolean vocabModified = false;
+	private boolean fileModified = false;
 	/**
 	 * The ListModel for the category JList.
 	 */
@@ -89,6 +108,19 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		japaneseVocabEditorPanel.addPropertyChangeListener(this);
 		clearGUI();
 		setGUIEnabled(false);
+		categoryPopupListener = new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				String chosenCat = ae.getActionCommand();
+				int[] sels = jListRomaji.getSelectedIndices();
+				// Move each one individually
+				for (int a = sels.length - 1; a >= 0; a--) {
+					VocabItem vocab = vocabulary.get(sels[a]);
+					moveVocabItem(vocab, currentCategory, chosenCat);
+				}
+				updateVocabularyList(currentCategory);
+			}
+		};
 	}
 
 	/**
@@ -100,10 +132,12 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 	private boolean addCategory(String cat) {
 		if (model != null && !modelCategories.contains(cat)) {
 			model.addCategory(cat);
+			logger.log(Level.INFO, "Adding new category: {0}", cat);
 			// Make sure it's sorted after add
-			updateGUI();
+			updateCategoryLessonList();
 			// Highlight the new category
 			jListCategories.setSelectedValue(cat, true);
+			fileModified = true;
 			return true;
 		}
 		return false;
@@ -128,22 +162,26 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 			}
 			if (addVocabulary(new VocabItem(resp, "", "", ""))) {
 				jListRomaji.setSelectedValue(resp, true);
+				logger.log(Level.INFO, "Adding new vocabulary: {0}", resp);
+			}
+			else {
+				setStatusText("Failed to add vocab " + resp, 4000);
 			}
 		}
 	}
 
 	/**
 	 * Adds a new {@link VocabItem} to currently selected category.
+	 *
 	 * @param item
 	 * @return
 	 */
 	private boolean addVocabulary(VocabItem item) {
-		if (model == null) {
-			return false;
-		}
-		if (!vocabulary.contains(item)) {
+		if (model != null && !vocabulary.contains(item)) {
 			if (model.addVocabItem(currentCategory, item)) {
-				setVocabulary(currentCategory);
+				updateVocabularyList(currentCategory);
+				fileModified = true;
+				logger.log(Level.INFO, "Adding new vocabulary: {0}", item.toJSONString());
 				return true;
 			}
 		}
@@ -159,8 +197,81 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		modelLessons.clear();
 		modelRomaji.clear();
 		japaneseVocabEditorPanel.clearPanel();
+		setStatusText(" ");
 		currentCategory = null;
 		selectedIndex = -1;
+	}
+
+	/**
+	 * Clears the GUI and resets the open file object.
+	 */
+	private void closeFile() {
+		clearGUI();
+		fileOpened = null;
+		model = null;
+		setTitle(APP_TITLE);
+		fileModified = false;
+	}
+
+	/**
+	 * Creates a new file by creating a new model and updating the GUI.
+	 *
+	 * @return
+	 */
+	private boolean createNewFile() {
+		// Check if any currently open file is modified
+		// TODO
+		// Close off any existing file
+		closeFile();
+		// Create a new model
+		model = new VocabModel();
+		clearGUI();
+		setGUIEnabled(true);
+		return false;
+	}
+
+	/**
+	 * Move a VocabItem from one category to another.
+	 *
+	 * @param item
+	 * @param fromCat
+	 * @param toCat
+	 * @return
+	 */
+	private boolean moveVocabItem(VocabItem item, String fromCat, String toCat) {
+		if (model == null || item == null) {
+			return false;
+		}
+		// Check if both categories exist
+		if (model.hasCategory(fromCat) && model.hasCategory(toCat)) {
+			// Check if vocab exists in from category
+			ArrayList<VocabItem> fromItems = model.getVocabItems(fromCat);
+			ArrayList<VocabItem> toItems = model.getVocabItems(toCat);
+			if (fromItems.contains(item)) {
+				// Remove it from category
+				model.removeVocabItem(fromCat, item);
+				// Add it to the other
+				if (!toItems.contains(item)) {
+					model.addVocabItem(toCat, item);
+				}
+				else {
+					setStatusText("Category " + toCat
+							+ " already already has that vocabulary.", 4000);
+				}
+				// Update the GUI
+				updateVocabularyList(currentCategory);
+				logger.log(Level.INFO, "Moving vocab from {0} to {1}: {2}",
+						new Object[]{fromCat, toCat, item.toJSONString()});
+				fileModified = true;
+				return true;
+			}
+			else {
+				logger.log(Level.WARNING,
+						"Cannot move vocabulary. Category {0} does not have vocabulary {1}",
+						new Object[]{fromCat, item.getEnglish()});
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -174,56 +285,44 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		if (file == null || !file.canRead()) {
 			return false;
 		}
+		// Check if current file is modified
+		if (fileModified) {
+			// TODO
+		}
 		try {
 			fileOpened = file;
 			model = JsonVocabIO.readJsonFile(fileOpened);
 			clearGUI();
-			updateGUI();
+			updateCategoryLessonList();
 			setGUIEnabled(true);
+			setTitle(APP_TITLE + " - " + fileOpened.getAbsolutePath());
+			String status = String.format(
+					"Opened %d categories and %d vocabulary from %s",
+					model.getCategoryCount(),
+					model.getVocabCount(),
+					fileOpened.getName());
+			setStatusText(status, 5000);
+			fileModified = false;
 			return true;
 		}
 		catch (FileNotFoundException ex) {
 			logger.log(Level.SEVERE, null, ex);
+			setStatusText("File not found", 3000);
 		}
 		catch (IOException ex) {
 			logger.log(Level.SEVERE, null, ex);
+			setStatusText("Could not read file", 3000);
 		}
 		catch (ParseException ex) {
 			logger.log(Level.SEVERE, null, ex);
+			setStatusText("Could not parse file", 4000);
 		}
 		return false;
 	}
 
-	/**
-	 * Sets the vocabulary list with vocabulary from the given category. If the
-	 * category is null or does not exist, the list will not be updated.
-	 *
-	 * @param category
-	 */
-	private void setVocabulary(String category) {
-		// If no model or category, clear out vocabulary list
-		if (model == null || category == null) {
-			modelRomaji.clear();
-			return;
-		}
-		ArrayList<VocabItem> items = model.getVocabItems(category);
-		if (items == null) {
-			return;
-		}
-		vocabulary = items;
-		modelRomaji.clear();
-		// Sort vocabulary
-		Collections.sort(vocabulary, new EnglishComparator());
-		// Populate list with the English words
-		for (VocabItem item : vocabulary) {
-			modelRomaji.addElement(item.getEnglish());
-		}
-		vocabModified = false;
-	}
-
 	@Override
 	public void propertyChange(PropertyChangeEvent pce) {
-		if (JapaneseVocabEditorPanel.PROP_MODIFIED.equals(pce.getPropertyName())) {
+		if (JapaneseVocabEditorPanel.PROP_MODIFIED_ENGLISH.equals(pce.getPropertyName())) {
 			String ov = pce.getOldValue().toString();
 			String nv = pce.getNewValue().toString();
 			boolean renamed = false;
@@ -242,7 +341,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 				// Update category spelling
 				model.renameCategory(ov.replace("#", ""), nv.replace("#", ""));
 				currentCategory = nv.replace("#", "");
-				updateGUI();
+				updateCategoryLessonList();
 				jListCategories.setSelectedValue(currentCategory, true);
 				renamed = true;
 			}
@@ -264,55 +363,288 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 				return;
 			}
 
-			vocabModified = true;
+			fileModified = true;
 
 			if (selectedIndex > -1) {
 				vocabulary.get(selectedIndex).setEnglish(nv);
 			}
-			setVocabulary(currentCategory);
+			updateVocabularyList(currentCategory);
 			jListRomaji.setSelectedValue(nv, true);
+		}
+		else if (JapaneseVocabEditorPanel.PROP_MODIFIED_LESSON.equals(pce.getPropertyName())) {
+			// lesson was modified
+			fileModified = true;
 		}
 	}
 
+	/**
+	 * Removes selected vocabulary from the list asking confirmation from the
+	 * user if desired.
+	 *
+	 * @param confirm
+	 * @return
+	 */
+	private boolean removeVocabItem(boolean confirm) {
+		int[] sels = jListRomaji.getSelectedIndices();
+		if (sels.length > 0) {
+			if (confirm) {
+				StringBuilder msg = new StringBuilder();
+				msg.append("Are you sure you want to delete ");
+				if (sels.length == 1) {
+					msg.append("this items?");
+				}
+				else {
+					msg.append("these ").append(sels.length).append(" items?");
+				}
+				int resp = JOptionPane.showConfirmDialog(this, msg.toString());
+				if (JOptionPane.YES_OPTION != resp) {
+					return false;
+				}
+			}
+			// Remove from end to start the selected items
+			for (int a = sels.length - 1; a >= 0; a--) {
+				String currItem = jListRomaji.getModel().getElementAt(sels[a]).toString();
+				if (currItem.startsWith("#")) {
+					// No removing category label item
+					JOptionPane.showMessageDialog(this, "Cannot delete category label item");
+					continue;
+				}
+				else {
+					if (model.removeVocabItem(currentCategory, vocabulary.get(sels[a]))) {
+						logger.log(Level.INFO, "Removing vocabulary: {0}",
+								vocabulary.get(sels[a]).toJSONString());
+						fileModified = true;
+					}
+				}
+			}
+			updateVocabularyList(currentCategory);
+			setStatusText("Removed " + sels.length + " items", 3000);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Prompts the user for a new file to save to.
+	 */
+	private boolean saveAsFile() {
+		if (model == null) {
+			return false;
+		}
+		if (fileOpened != null) {
+			jFileChooserSave.setCurrentDirectory(fileOpened.getParentFile());
+		}
+		int resp = jFileChooserSave.showSaveDialog(this);
+		if (JOptionPane.OK_OPTION == resp) {
+			File file = jFileChooserSave.getSelectedFile();
+			if (file.getParentFile().canWrite()) {
+				fileOpened = file;
+				return saveFile(fileOpened);
+			}
+			else {
+				JOptionPane.showMessageDialog(this,
+						"Cannot write to chosen directory.",
+						"Cannot save",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Saves the vocabulary model to a given file.
+	 *
+	 * @param file
+	 */
+	private boolean saveFile(File file) {
+		if (file == null || model == null) {
+			return false;
+		}
+		if (file.getParentFile().canWrite()) {
+			JsonVocabIO.writeJsonFile(fileOpened, model);
+			setStatusText("File saved: " + fileOpened.getAbsolutePath(), 4000);
+			fileModified = false;
+			return true;
+		}
+		else {
+			JOptionPane.showMessageDialog(this,
+					"Cannot write to chosen directory.",
+					"Cannot save",
+					JOptionPane.ERROR_MESSAGE);
+		}
+		return false;
+	}
+
+	/**
+	 * Sets the GUI in an enabled/disabled state based on whether a file is open
+	 * or not so controls can't be used when not appropriate.
+	 *
+	 * @param enable
+	 */
 	private void setGUIEnabled(boolean enable) {
+		// Add/remove buttons only valid for category mode
+		boolean showing = jComboBoxCategoryLesson.getSelectedIndex() == 0;
 		jComboBoxCategoryLesson.setEnabled(enable);
 		jListCategories.setEnabled(enable);
 		jListLessons.setEnabled(enable);
 		jListRomaji.setEnabled(enable);
-		jButtonCategoryAdd.setEnabled(enable);
-		jButtonCategoryDelete.setEnabled(enable);
-		jButtonRomajiAdd.setEnabled(enable);
-		jButtonRomajiDelete.setEnabled(enable);
-		jButtonRomajiMove.setEnabled(enable);
 		japaneseVocabEditorPanel.setEnabled(enable);
+		// Buttons
+		jButtonCategoryAdd.setEnabled(enable && showing);
+		jButtonCategoryDelete.setEnabled(enable && showing);
+		jButtonRomajiAdd.setEnabled(enable && showing);
+		jButtonRomajiDelete.setEnabled(enable && showing);
+		jButtonRomajiMove.setEnabled(enable && showing);
+		// Menu items
+		jMenuItemCatAdd.setEnabled(enable && showing);
+		jMenuItemCatDelete.setEnabled(enable && showing);
+		jMenuItemVocabAdd.setEnabled(enable && showing);
+		jMenuItemVocabDelete.setEnabled(enable && showing);
+		jMenuItemVocabMove.setEnabled(enable && showing);
+	}
+
+	/**
+	 * Sets the status text for a given delay.
+	 *
+	 * @param status
+	 * @param ms
+	 */
+	private void setStatusText(String status, int ms) {
+		setStatusText(status);
+		timedStatus = true;
+		// Clear status after ms milliseconds
+		java.util.Timer timer = new java.util.Timer();
+		timer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				// Only clear it if another status has not been set
+				if (timedStatus) {
+					setStatusText(" ");
+				}
+			}
+		}, ms);
+	}
+
+	/**
+	 * Configures and sets up the JPopupMenu used to show the user a list of
+	 * categories to be picked from.
+	 */
+	private void setupCategoryPopup(boolean disableCurrent) {
+		jPopupMenuCategories.removeAll();
+		List<String> cats = model.getCategories();
+		for (String cat : cats) {
+			JMenuItem item = new JMenuItem(cat);
+			item.setActionCommand(cat);
+			// Disable current category so it can't be chosen
+			if (cat.equals(currentCategory)) {
+				item.setEnabled(false);
+			}
+			// Set the action
+			item.addActionListener(categoryPopupListener);
+			jPopupMenuCategories.add(item);
+		}
+//		jPopupMenuCategories.pack();
+	}
+
+	/**
+	 * Sets the text of the status bar.
+	 *
+	 * @param status
+	 */
+	private void setStatusText(String status) {
+		timedStatus = false;
+		jLabelStatus.setText(status);
 	}
 
 	/**
 	 * Updates the GUI, populating the category list from the model.
 	 */
-	private void updateGUI() {
+	private void updateCategoryLessonList() {
 		if (model == null) {
 			return;
 		}
 		// Update the category list
-		String[] cats = model.getCategories();
+		List<String> cats = model.getCategories();
+		Object selectedItem = jListCategories.getSelectedValue();
 		modelCategories.clear();
-		Arrays.sort(cats);
+		Collections.sort(cats);
 		for (String cat : cats) {
 			if (!modelCategories.contains(cat)) {
 				modelCategories.addElement(cat);
 			}
 		}
+		if (selectedItem != null) {
+			jListCategories.setSelectedValue(selectedItem, true);
+		}
 
 		// Update the lesson list
 		List<Integer> lessons = model.getLessons();
 		Collections.sort(lessons);
+		selectedItem = jListLessons.getSelectedValue();
 		modelLessons.clear();
 		for (Integer lesson : lessons) {
 			if (!modelLessons.contains(lessons)) {
 				modelLessons.addElement(lesson);
 			}
 		}
+		if (selectedItem != null) {
+			jListLessons.setSelectedValue(selectedItem, true);
+		}
+	}
+
+	/**
+	 * Sets the vocabulary list with vocabulary from the given category. If the
+	 * category is null or does not exist, the list will not be updated.
+	 *
+	 * @param category
+	 */
+	private void updateVocabularyList(String category) {
+		// If no model or category, clear out vocabulary list
+		if (model == null || category == null) {
+			modelRomaji.clear();
+			return;
+		}
+		ArrayList<VocabItem> items = model.getVocabItems(category);
+		if (items == null) {
+			return;
+		}
+		// Maintain selection
+		Object selectedItem = jListCategories.getSelectedValue();
+		vocabulary = items;
+		modelRomaji.clear();
+		// Sort vocabulary
+		Collections.sort(vocabulary, new EnglishComparator());
+		// Populate list with the English words
+		for (VocabItem item : vocabulary) {
+			modelRomaji.addElement(item.getEnglish());
+		}
+		if (selectedItem != null) {
+			jListCategories.setSelectedValue(selectedItem, true);
+		}
+		fileModified = false;
+	}
+
+	/**
+	 * Sets the vocabulary list with vocabulary from the given lesson. If the
+	 * lesson is less than 0, the list will not be updated.
+	 *
+	 * @param lesson
+	 */
+	private void updateVocabularyList(int lesson) {
+		if (model == null || lesson < 0) {
+			return;
+		}
+		// Try to maintain selection
+		Object selectedItem = jListLessons.getSelectedValue();
+		modelRomaji.clear();
+		vocabulary = model.getVocabItems(lesson);
+		for (VocabItem item : vocabulary) {
+			modelRomaji.addElement(item.getEnglish());
+		}
+		if (selectedItem != null) {
+			jListLessons.setSelectedValue(selectedItem, true);
+		}
+		fileModified = false;
 	}
 
 	/**
@@ -325,9 +657,8 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
     private void initComponents() {
 
         jFileChooserOpen = new javax.swing.JFileChooser();
-        jToolBar = new javax.swing.JToolBar();
-        jButtonToolbarOpen = new javax.swing.JButton();
-        jButtonToolbarSave = new javax.swing.JButton();
+        jFileChooserSave = new javax.swing.JFileChooser();
+        jPopupMenuCategories = new javax.swing.JPopupMenu();
         jPanelMain = new javax.swing.JPanel();
         jSplitPane = new javax.swing.JSplitPane();
         jPanelCategories = new javax.swing.JPanel();
@@ -350,35 +681,33 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
         jButtonRomajiMove = new javax.swing.JButton();
         japaneseVocabEditorPanel = new psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorPanel();
         jPanelButtons = new javax.swing.JPanel();
+        jLabelStatus = new javax.swing.JLabel();
         jMenuBar = new javax.swing.JMenuBar();
-        jMenu1 = new javax.swing.JMenu();
+        jMenuFile = new javax.swing.JMenu();
+        jMenuItemNew = new javax.swing.JMenuItem();
+        jMenuItemOpen = new javax.swing.JMenuItem();
+        jMenuItemSave = new javax.swing.JMenuItem();
+        jMenuItemSaveAs = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        jMenuItemClose = new javax.swing.JMenuItem();
+        jMenuItemExit = new javax.swing.JMenuItem();
+        jMenuVocab = new javax.swing.JMenu();
+        jMenuItemCatAdd = new javax.swing.JMenuItem();
+        jMenuItemCatDelete = new javax.swing.JMenuItem();
+        jSeparator2 = new javax.swing.JPopupMenu.Separator();
+        jMenuItemVocabAdd = new javax.swing.JMenuItem();
+        jMenuItemVocabDelete = new javax.swing.JMenuItem();
+        jMenuItemVocabMove = new javax.swing.JMenuItem();
 
         jFileChooserOpen.setDialogTitle("Select JSON file");
 
+        jFileChooserSave.setDialogType(javax.swing.JFileChooser.SAVE_DIALOG);
+        jFileChooserSave.setFileHidingEnabled(false);
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(500, 500));
-
-        jToolBar.setFloatable(false);
-        jToolBar.setRollover(true);
-
-        jButtonToolbarOpen.setText("Open");
-        jButtonToolbarOpen.setFocusable(false);
-        jButtonToolbarOpen.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButtonToolbarOpen.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButtonToolbarOpen.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonToolbarOpenActionPerformed(evt);
-            }
-        });
-        jToolBar.add(jButtonToolbarOpen);
-
-        jButtonToolbarSave.setText("Save");
-        jButtonToolbarSave.setFocusable(false);
-        jButtonToolbarSave.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButtonToolbarSave.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar.add(jButtonToolbarSave);
-
-        getContentPane().add(jToolBar, java.awt.BorderLayout.NORTH);
+        setTitle("Japanese Vocabulary Editor");
+        setMinimumSize(new java.awt.Dimension(300, 300));
+        setPreferredSize(new java.awt.Dimension(500, 360));
 
         jPanelMain.setLayout(new java.awt.BorderLayout());
 
@@ -415,6 +744,11 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 
         jListLessons.setModel(new DefaultListModel());
         jListLessons.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jListLessons.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                jListLessonsValueChanged(evt);
+            }
+        });
         jScrollPaneLessons.setViewportView(jListLessons);
 
         jPanelCategoryLesson.add(jScrollPaneLessons, "lessons");
@@ -423,9 +757,11 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 
         jPanelCategoryButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
+        jButtonCategoryAdd.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         jButtonCategoryAdd.setText("+");
         jButtonCategoryAdd.setIconTextGap(0);
         jButtonCategoryAdd.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jButtonCategoryAdd.setPreferredSize(new java.awt.Dimension(24, 20));
         jButtonCategoryAdd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonCategoryAddActionPerformed(evt);
@@ -433,9 +769,11 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
         });
         jPanelCategoryButtons.add(jButtonCategoryAdd);
 
+        jButtonCategoryDelete.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         jButtonCategoryDelete.setText("-");
         jButtonCategoryDelete.setIconTextGap(0);
         jButtonCategoryDelete.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jButtonCategoryDelete.setPreferredSize(new java.awt.Dimension(24, 20));
         jPanelCategoryButtons.add(jButtonCategoryDelete);
 
         jPanelCategories.add(jPanelCategoryButtons, java.awt.BorderLayout.SOUTH);
@@ -456,9 +794,11 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 
         jPanelRomajiButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
 
+        jButtonRomajiAdd.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         jButtonRomajiAdd.setText("+");
         jButtonRomajiAdd.setIconTextGap(0);
         jButtonRomajiAdd.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jButtonRomajiAdd.setPreferredSize(new java.awt.Dimension(24, 20));
         jButtonRomajiAdd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonRomajiAddActionPerformed(evt);
@@ -466,9 +806,11 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
         });
         jPanelRomajiButtons.add(jButtonRomajiAdd);
 
+        jButtonRomajiDelete.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         jButtonRomajiDelete.setText("-");
         jButtonRomajiDelete.setIconTextGap(0);
         jButtonRomajiDelete.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        jButtonRomajiDelete.setPreferredSize(new java.awt.Dimension(24, 20));
         jButtonRomajiDelete.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonRomajiDeleteActionPerformed(evt);
@@ -476,7 +818,16 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
         });
         jPanelRomajiButtons.add(jButtonRomajiDelete);
 
+        jButtonRomajiMove.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         jButtonRomajiMove.setText("mv");
+        jButtonRomajiMove.setIconTextGap(0);
+        jButtonRomajiMove.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        jButtonRomajiMove.setPreferredSize(new java.awt.Dimension(30, 20));
+        jButtonRomajiMove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButtonRomajiMoveActionPerformed(evt);
+            }
+        });
         jPanelRomajiButtons.add(jButtonRomajiMove);
 
         jPanelRomanji.add(jPanelRomajiButtons, java.awt.BorderLayout.SOUTH);
@@ -489,10 +840,84 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
         jPanelMain.add(japaneseVocabEditorPanel, java.awt.BorderLayout.SOUTH);
 
         getContentPane().add(jPanelMain, java.awt.BorderLayout.CENTER);
+
+        jPanelButtons.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+
+        jLabelStatus.setFont(new java.awt.Font("Verdana", 0, 12)); // NOI18N
+        jLabelStatus.setText("Status");
+        jPanelButtons.add(jLabelStatus);
+
         getContentPane().add(jPanelButtons, java.awt.BorderLayout.SOUTH);
 
-        jMenu1.setText("File");
-        jMenuBar.add(jMenu1);
+        jMenuFile.setText("File");
+
+        jMenuItemNew.setText("New File");
+        jMenuItemNew.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemNewActionPerformed(evt);
+            }
+        });
+        jMenuFile.add(jMenuItemNew);
+
+        jMenuItemOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        jMenuItemOpen.setText("Open File");
+        jMenuItemOpen.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemOpenActionPerformed(evt);
+            }
+        });
+        jMenuFile.add(jMenuItemOpen);
+
+        jMenuItemSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+        jMenuItemSave.setText("Save");
+        jMenuItemSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemSaveActionPerformed(evt);
+            }
+        });
+        jMenuFile.add(jMenuItemSave);
+
+        jMenuItemSaveAs.setText("Save as");
+        jMenuItemSaveAs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemSaveAsActionPerformed(evt);
+            }
+        });
+        jMenuFile.add(jMenuItemSaveAs);
+        jMenuFile.add(jSeparator1);
+
+        jMenuItemClose.setText("Close File");
+        jMenuItemClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                closeFileAction(evt);
+            }
+        });
+        jMenuFile.add(jMenuItemClose);
+
+        jMenuItemExit.setText("Exit");
+        jMenuFile.add(jMenuItemExit);
+
+        jMenuBar.add(jMenuFile);
+
+        jMenuVocab.setText("Vocabulary");
+
+        jMenuItemCatAdd.setText("Add Category");
+        jMenuVocab.add(jMenuItemCatAdd);
+
+        jMenuItemCatDelete.setText("Delete Category");
+        jMenuVocab.add(jMenuItemCatDelete);
+        jMenuVocab.add(jSeparator2);
+
+        jMenuItemVocabAdd.setText("Add Vocabulary");
+        jMenuVocab.add(jMenuItemVocabAdd);
+
+        jMenuItemVocabDelete.setText("Delete Category");
+        jMenuVocab.add(jMenuItemVocabDelete);
+
+        jMenuItemVocabMove.setText("Move Vocabulary");
+        jMenuVocab.add(jMenuItemVocabMove);
+
+        jMenuBar.add(jMenuVocab);
 
         setJMenuBar(jMenuBar);
 
@@ -506,49 +931,58 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 			if (model == null || currentCategory == null) {
 				return;
 			}
-			setVocabulary(currentCategory);
+			updateVocabularyList(currentCategory);
 		}
     }//GEN-LAST:event_jListCategoriesValueChanged
 
     private void jComboBoxCategoryLessonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxCategoryLessonActionPerformed
 		String pick = jComboBoxCategoryLesson.getSelectedItem().toString();
 		((CardLayout) jPanelCategoryLesson.getLayout()).show(jPanelCategoryLesson, pick.toLowerCase());
-		updateGUI();
+		updateCategoryLessonList();
+		if (pick.equals("Categories")) {
+			Object sel = jListCategories.getSelectedValue();
+			if (sel != null) {
+				updateVocabularyList(sel.toString());
+			}
+			else {
+				modelRomaji.clear();
+			}
+		}
+		else if (pick.equals("Lessons")) {
+			int sel = jListLessons.getSelectedIndex();
+			if (sel > -1) {
+				updateVocabularyList(sel);
+			}
+			else {
+				modelRomaji.clear();
+			}
+		}
     }//GEN-LAST:event_jComboBoxCategoryLessonActionPerformed
 
     private void jListRomajiValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jListRomajiValueChanged
 		if (evt.getValueIsAdjusting()) {
 			return;
 		}
-		int sel = jListRomaji.getSelectedIndex();
-		if (vocabModified) {
-			// warn about modification
-//			JOptionPane.showMessageDialog(this, "Vocabuary item modified. Save changes.");
-//			return;
+		int[] sel = jListRomaji.getSelectedIndices();
+		if (sel.length > 0) {
+			selectedIndex = sel[0];
+			if (selectedIndex > -1) {
+				japaneseVocabEditorPanel.setVocabItem(vocabulary.get(selectedIndex));
+			}
+			else {
+				japaneseVocabEditorPanel.clearPanel();
+			}
 		}
-		selectedIndex = sel;
-		if (selectedIndex > -1) {
-			japaneseVocabEditorPanel.setVocabItem(vocabulary.get(sel));
-		}
-		else {
-			japaneseVocabEditorPanel.clearPanel();
-		}
-		vocabModified = false;
+		// Editor only enabled when one vocabulary is selected
+		japaneseVocabEditorPanel.setEnabled(sel.length == 1);
     }//GEN-LAST:event_jListRomajiValueChanged
-
-    private void jButtonToolbarOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonToolbarOpenActionPerformed
-		// Prompt user for JSON fileOpened
-		int resp = jFileChooserOpen.showOpenDialog(this);
-		if (JFileChooser.APPROVE_OPTION == resp) {
-			openFile(jFileChooserOpen.getSelectedFile());
-		}
-    }//GEN-LAST:event_jButtonToolbarOpenActionPerformed
 
     private void jButtonCategoryAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCategoryAddActionPerformed
 		if (model == null) {
 			return;
 		}
-		String resp = JOptionPane.showInputDialog(this, "New Category:", "New Category", JOptionPane.QUESTION_MESSAGE);
+		String resp = JOptionPane.showInputDialog(this, "New Category:",
+				"New Category", JOptionPane.QUESTION_MESSAGE);
 		if (resp != null) {
 			if (!addCategory(resp)) {
 				JOptionPane.showMessageDialog(this, "That category already exists.");
@@ -562,39 +996,61 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
     }//GEN-LAST:event_jButtonCategoryAddActionPerformed
 
     private void jButtonRomajiAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonRomajiAddActionPerformed
-        addVocabulary();
+		addVocabulary();
     }//GEN-LAST:event_jButtonRomajiAddActionPerformed
 
     private void jButtonRomajiDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonRomajiDeleteActionPerformed
-        int[] sels = jListRomaji.getSelectedIndices();
-		if (sels.length > 0) {
-			StringBuilder msg = new StringBuilder();
-			msg.append("Are you sure you want to delete ");
-			if (sels.length == 1) {
-				msg.append("this items?");
-			}
-			else {
-				msg.append("these ").append(sels.length).append(" items?");
-			}
-			int resp = JOptionPane.showConfirmDialog(this, msg.toString());
-			if (JOptionPane.YES_OPTION != resp) {
+		removeVocabItem(true);
+    }//GEN-LAST:event_jButtonRomajiDeleteActionPerformed
+
+    private void jListLessonsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jListLessonsValueChanged
+		if (!evt.getValueIsAdjusting()) {
+			Object selObject = jListLessons.getSelectedValue();
+			if (selObject == null) {
 				return;
 			}
-			// Remove from end to start the selected items
-			for (int a = sels.length - 1; a >= 0; a--) {
-				String currItem = jListRomaji.getModel().getElementAt(sels[a]).toString();
-				if (currItem.startsWith("#")) {
-					// No removing category label item
-					JOptionPane.showMessageDialog(this, "Cannot delete category label item");
-					continue;
-				}
-				else {
-					model.removeVocabItem(currentCategory, vocabulary.get(sels[a]));
-				}
-			}
-			setVocabulary(currentCategory);
+			int lesson = Integer.parseInt(selObject.toString(), 10);
+			// Show vocabulary from given lesson
+			updateVocabularyList(lesson);
 		}
-    }//GEN-LAST:event_jButtonRomajiDeleteActionPerformed
+    }//GEN-LAST:event_jListLessonsValueChanged
+
+    private void jMenuItemOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemOpenActionPerformed
+		// Prompt user for JSON fileOpened
+		int resp = jFileChooserOpen.showOpenDialog(this);
+		if (JFileChooser.APPROVE_OPTION == resp) {
+			openFile(jFileChooserOpen.getSelectedFile());
+		}
+    }//GEN-LAST:event_jMenuItemOpenActionPerformed
+
+    private void jMenuItemSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemSaveActionPerformed
+		// Assuming the opened file is the one we want to save to
+		saveFile(fileOpened);
+    }//GEN-LAST:event_jMenuItemSaveActionPerformed
+
+    private void jMenuItemSaveAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemSaveAsActionPerformed
+		saveAsFile();
+    }//GEN-LAST:event_jMenuItemSaveAsActionPerformed
+
+    private void closeFileAction(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeFileAction
+		closeFile();
+    }//GEN-LAST:event_closeFileAction
+
+    private void jButtonRomajiMoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonRomajiMoveActionPerformed
+		// Make sure at least one vocabulary is selected
+		int[] sels = jListRomaji.getSelectedIndices();
+		if (sels.length == 0) {
+			return;
+		}
+		// Show popup menu with category options
+		setupCategoryPopup(true);
+		jButtonRomajiMove.setComponentPopupMenu(jPopupMenuCategories);
+		jPopupMenuCategories.show(jButtonRomajiMove, 0, 0);
+    }//GEN-LAST:event_jButtonRomajiMoveActionPerformed
+
+    private void jMenuItemNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemNewActionPerformed
+		createNewFile();
+    }//GEN-LAST:event_jMenuItemNewActionPerformed
 
 	/**
 	 * @param args the command line arguments
@@ -614,13 +1070,13 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		Logger.getAnonymousLogger().log(Level.INFO, "Starting");
 
 		/* Set the Nimbus look and feel */
-		//<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+		//<editor-fold-null defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+			/* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
 		 * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
 		 */
 		try {
 			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
+				if ("Metal".equals(info.getName())) {
 					javax.swing.UIManager.setLookAndFeel(info.getClassName());
 					break;
 				}
@@ -638,7 +1094,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		catch (javax.swing.UnsupportedLookAndFeelException ex) {
 			java.util.logging.Logger.getLogger(JapaneseVocabEditor.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 		}
-		//</editor-fold>
+		//</editor-fold-null>
 
 		/* Create and display the form */
 		java.awt.EventQueue.invokeLater(new Runnable() {
@@ -654,15 +1110,27 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
     private javax.swing.JButton jButtonRomajiAdd;
     private javax.swing.JButton jButtonRomajiDelete;
     private javax.swing.JButton jButtonRomajiMove;
-    private javax.swing.JButton jButtonToolbarOpen;
-    private javax.swing.JButton jButtonToolbarSave;
     private javax.swing.JComboBox jComboBoxCategoryLesson;
     private javax.swing.JFileChooser jFileChooserOpen;
+    private javax.swing.JFileChooser jFileChooserSave;
+    private javax.swing.JLabel jLabelStatus;
     private javax.swing.JList jListCategories;
     private javax.swing.JList jListLessons;
     private javax.swing.JList jListRomaji;
-    private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar;
+    private javax.swing.JMenu jMenuFile;
+    private javax.swing.JMenuItem jMenuItemCatAdd;
+    private javax.swing.JMenuItem jMenuItemCatDelete;
+    private javax.swing.JMenuItem jMenuItemClose;
+    private javax.swing.JMenuItem jMenuItemExit;
+    private javax.swing.JMenuItem jMenuItemNew;
+    private javax.swing.JMenuItem jMenuItemOpen;
+    private javax.swing.JMenuItem jMenuItemSave;
+    private javax.swing.JMenuItem jMenuItemSaveAs;
+    private javax.swing.JMenuItem jMenuItemVocabAdd;
+    private javax.swing.JMenuItem jMenuItemVocabDelete;
+    private javax.swing.JMenuItem jMenuItemVocabMove;
+    private javax.swing.JMenu jMenuVocab;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanelButtons;
     private javax.swing.JPanel jPanelCategories;
@@ -671,11 +1139,13 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
     private javax.swing.JPanel jPanelMain;
     private javax.swing.JPanel jPanelRomajiButtons;
     private javax.swing.JPanel jPanelRomanji;
+    private javax.swing.JPopupMenu jPopupMenuCategories;
     private javax.swing.JScrollPane jScrollPaneCategories;
     private javax.swing.JScrollPane jScrollPaneLessons;
     private javax.swing.JScrollPane jScrollPaneRomaji;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
+    private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JSplitPane jSplitPane;
-    private javax.swing.JToolBar jToolBar;
     private psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorPanel japaneseVocabEditorPanel;
     // End of variables declaration//GEN-END:variables
 

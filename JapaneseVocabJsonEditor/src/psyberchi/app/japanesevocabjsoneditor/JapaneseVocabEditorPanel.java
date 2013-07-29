@@ -5,15 +5,38 @@
  */
 package psyberchi.app.japanesevocabjsoneditor;
 
-import javax.swing.SpinnerNumberModel;
-
 /**
+ * A JPanel that shows the contents of a VocabItem and allows editing its
+ * values. When fields are modified and lose focus they fire property change
+ * events that give the old and new values.
  *
  * @author Kendall Conrad
  */
 public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
-	public static final String PROP_MODIFIED = "MODIFIED";
+	/**
+	 * Property for when the English field is modified.
+	 */
+	public static final String PROP_MODIFIED_ENGLISH = "MODIFIED_ENGLISH";
+	/**
+	 * Property for when the romaji field is modified.
+	 */
+	public static final String PROP_MODIFIED_ROMAJI = "MODIFIED_ROMAJI";
+	/**
+	 * Property for when the kana field is modified.
+	 */
+	public static final String PROP_MODIFIED_KANA = "MODIFIED_KANA";
+	/**
+	 * Property for when the kanji field is modified.
+	 */
+	public static final String PROP_MODIFIED_KANJI = "MODIFIED_KANJI";
+	/**
+	 * Property for when the lesson field is modified.
+	 */
+	public static final String PROP_MODIFIED_LESSON = "MODIFIED_LESSON";
+	/**
+	 * The currently set VocabItem in the panel.
+	 */
 	private VocabItem vocabItem = null;
 
 	/**
@@ -23,6 +46,9 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 		initComponents();
 	}
 
+	/**
+	 * Resets all fields to empty or default values.
+	 */
 	public void clearPanel() {
 		jTextFieldEnglish.setText("");
 		jTextFieldRomaji.setText("");
@@ -31,10 +57,21 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 		jSpinnerLesson.setValue(0);
 	}
 
+	/**
+	 * Returns the currently set VocabItem on the panel.
+	 *
+	 * @return currently set VocabItem.
+	 */
 	public VocabItem getVocabItem() {
 		return vocabItem;
 	}
 
+	/**
+	 * Sets the current VocabItem for the panel and fills in all the fields.
+	 *
+	 * @param item VocabItem to use to fill out fields.
+	 * @return false if VocabItem null, true otherwise.
+	 */
 	public boolean setVocabItem(VocabItem item) {
 		if (item == null) {
 			return false;
@@ -48,6 +85,11 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 		return true;
 	}
 
+	/**
+	 * Enables/Disables each field individually.
+	 *
+	 * @param enable whether to enable or disable.
+	 */
 	@Override
 	public void setEnabled(boolean enable) {
 		jTextFieldEnglish.setEnabled(enable);
@@ -57,6 +99,11 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 		jSpinnerLesson.setEnabled(enable);
 	}
 
+	/**
+	 * Sets the text for the English field. A null clears the field.
+	 *
+	 * @param str String to use to fill the field.
+	 */
 	public void setEnglish(String str) {
 		vocabItem.setEnglish(str);
 		jTextFieldEnglish.setText(str);
@@ -88,7 +135,8 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
         jPanelLessonSpinner = new javax.swing.JPanel();
         jSpinnerLesson = new javax.swing.JSpinner();
 
-        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.PAGE_AXIS));
+        setMinimumSize(new java.awt.Dimension(160, 130));
+        setLayout(new java.awt.GridLayout(0, 1, 0, 4));
 
         jPanelEnglish.setLayout(new java.awt.BorderLayout());
 
@@ -132,6 +180,8 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
         jTextFieldKana.setFont(new java.awt.Font("Hiragino Mincho Pro", 0, 22)); // NOI18N
         jTextFieldKana.setText("かな");
+        jTextFieldKana.setAlignmentY(-2.5F);
+        jTextFieldKana.setMargin(new java.awt.Insets(0, 0, -10, 0));
         jTextFieldKana.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 jTextFieldKanaFocusLost(evt);
@@ -151,6 +201,7 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
         jTextFieldKanji.setFont(new java.awt.Font("Hiragino Mincho Pro", 0, 22)); // NOI18N
         jTextFieldKanji.setText("感じ");
+        jTextFieldKanji.setMargin(new java.awt.Insets(0, 0, -10, 0));
         jTextFieldKanji.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 jTextFieldKanjiFocusLost(evt);
@@ -191,31 +242,49 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jTextFieldEnglishFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldEnglishFocusLost
-        String oldValue = vocabItem.getEnglish();
-        String newValue = jTextFieldEnglish.getText();
-		if (!oldValue.equals(newValue)) {
-			vocabItem.setEnglish(newValue);
-			firePropertyChange(PROP_MODIFIED, oldValue, newValue);
+		String ov = vocabItem.getEnglish();
+		String nv = jTextFieldEnglish.getText();
+		if (!ov.equals(nv)) {
+			vocabItem.setEnglish(nv);
+			firePropertyChange(PROP_MODIFIED_ENGLISH, ov, nv);
 		}
     }//GEN-LAST:event_jTextFieldEnglishFocusLost
 
     private void jTextFieldRomajiFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldRomajiFocusLost
-        vocabItem.setRomanji(jTextFieldRomaji.getText());
+		String ov = vocabItem.getRomanji();
+		String nv = jTextFieldRomaji.getText();
+		if (!ov.equals(nv)) {
+			vocabItem.setRomanji(nv);
+			firePropertyChange(PROP_MODIFIED_ROMAJI, ov, nv);
+		}
     }//GEN-LAST:event_jTextFieldRomajiFocusLost
 
     private void jTextFieldKanaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldKanaFocusLost
-        vocabItem.setKana(jTextFieldKana.getText());
+		String ov = vocabItem.getKana();
+		String nv = jTextFieldKana.getText();
+		if (!ov.equals(nv)) {
+			vocabItem.setKana(nv);
+			firePropertyChange(PROP_MODIFIED_KANA, ov, nv);
+		}
     }//GEN-LAST:event_jTextFieldKanaFocusLost
 
     private void jTextFieldKanjiFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldKanjiFocusLost
-        vocabItem.setKanji(jTextFieldKanji.getText());
+		String ov = vocabItem.getKanji();
+		String nv = jTextFieldKanji.getText();
+		if (!ov.equals(nv)) {
+			vocabItem.setKanji(nv);
+			firePropertyChange(PROP_MODIFIED_KANJI, ov, nv);
+		}
     }//GEN-LAST:event_jTextFieldKanjiFocusLost
 
     private void jSpinnerLessonStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinnerLessonStateChanged
-        int val = ((SpinnerNumberModel) jSpinnerLesson.getModel()).getNumber().intValue();
-		vocabItem.setLesson(val);
+		int nv = ((javax.swing.SpinnerNumberModel) jSpinnerLesson.getModel()).getNumber().intValue();
+		int ov = vocabItem.getLesson();
+		if (ov != nv) {
+			vocabItem.setLesson(nv);
+			firePropertyChange(PROP_MODIFIED_LESSON, ov, nv);
+		}
     }//GEN-LAST:event_jSpinnerLessonStateChanged
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabelEnglish;
     private javax.swing.JLabel jLabelKana;

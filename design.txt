@@ -1,0 +1,98 @@
+= Japanese Vocabulary Editor =
+
+== TODO ==
+
+* Update lesson list when lesson value changed.
+* Add actions to menu items.
+* VocabModel
+** Make properties a array of properties so more can be added dynamically.
+* Want to break out main GUI into more files somehow.
+
+= Hierarchy for programs =
+
+Quiz
+	-> KanaQuiz
+	-> VocabQuiz
+
+== Project directory layout ==
+
+Japanese Projects/
+	Quiz (project)
+		QuizModel.java
+	Utils/
+		CustomLogger.java
+	Japanese/
+		JapaneseVocabEditor (project)
+			VocabModel.java
+		KanaQuiz (project)
+		VocabQuiz (project)
+
+== Keyboard Shortcuts ==
+
+Open: Ctrl + O
+Save: Ctrl + S
+Save as: Ctrl + Shift + S
+Close:
+Exit:
+Add Category: Ctrl + Shift + C
+Remove Category:
+Add Vocabulary: Ctrl + Shift + V
+Remove Vocabulary: Ctrl + Shift + R
+Move Vocabulary: Ctrl + M
+
+= GUI =
+
+{
+	"top": {
+		"splitpane": {
+			"direction": "horizontal",
+			"panes": [
+				"categoryList": {
+					"list": JList,
+					"buttons": [
+						"add": JButton,
+						"remove": JButton
+					]
+				},
+				"vocabList": {
+					"list": JList,
+					"buttons": [
+						"add": JButton,
+						"remove": JButton,
+						"move": JButton
+					]
+				}
+			]
+		}
+	},
+	"editorRegion": {
+		"layout": {
+			"type": "box",
+			"direction": "page"
+		},
+		"english": [
+			"label": JLabel,
+			"value": JTextField
+		],
+		"romaji": [
+			"label": JLabel,
+			"value": JTextField
+		],
+		"kana": [
+			"label": JLabel,
+			"value": JTextField
+		],
+		"kanji": [
+			"label": JLabel,
+			"value": JTextField
+		],
+		"lesson": [
+			"label": JLabel,
+			"value": JSpinner
+		]
+	},
+	"statusBar": {
+		"text": JLabel
+	}
+}
+

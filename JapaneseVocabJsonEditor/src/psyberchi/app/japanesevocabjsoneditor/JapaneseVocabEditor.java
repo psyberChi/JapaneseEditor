@@ -9,6 +9,7 @@ import java.awt.CardLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -30,6 +31,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.event.ListSelectionEvent;
 import org.json.simple.parser.ParseException;
 
 /**
@@ -76,17 +78,21 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 	 */
 	private DefaultListModel modelLessons = null;
 	/**
-	 * The ListModel for the romaji JList.
+	 * The ListModel for the vocabulary JList.
 	 */
-	private DefaultListModel modelRomaji = null;
+	private DefaultListModel modelVocabulary = null;
 	/**
 	 * The currently open fileOpened.
 	 */
 	private File fileOpened = null;
 	/**
+	 * The current lesson selected
+	 */
+	private int currentLesson = -1;
+	/**
 	 * Index of selected vocabulary.
 	 */
-	private int selectedIndex = -1;
+	private int selectedVocabIndex = -1;
 	/**
 	 * The current category chosen.
 	 */
@@ -97,6 +103,28 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 	private VocabModel model = null;
 
 	/**
+	 * Enumeration of vocabulary display modes.
+	 */
+	public enum VocabDisplayMode {
+
+		English,
+		Romaji,
+		Kana,
+		Kanji;
+
+	};
+
+	/**
+	 * Enumeration of the sort modes for organizing the vocabulary.
+	 */
+	public enum SortMode {
+
+		Categories,
+		Lessons;
+
+	};
+
+	/**
 	 * Creates new form JapaneseVocabEditor
 	 */
 	public JapaneseVocabEditor() {
@@ -104,7 +132,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		// Capture models
 		modelCategories = (DefaultListModel) jListCategories.getModel();
 		modelLessons = (DefaultListModel) jListLessons.getModel();
-		modelRomaji = (DefaultListModel) jListRomaji.getModel();
+		modelVocabulary = (DefaultListModel) jListVocabulary.getModel();
 		japaneseVocabEditorPanel.addPropertyChangeListener(this);
 		clearGUI();
 		setGUIEnabled(false);
@@ -112,7 +140,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				String chosenCat = ae.getActionCommand();
-				int[] sels = jListRomaji.getSelectedIndices();
+				int[] sels = jListVocabulary.getSelectedIndices();
 				// Move each one individually
 				for (int a = sels.length - 1; a >= 0; a--) {
 					VocabItem vocab = vocabulary.get(sels[a]);
@@ -152,7 +180,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		String resp = JOptionPane.showInputDialog(this, "English entry:",
 				"Add new vocabulary", JOptionPane.QUESTION_MESSAGE);
 		if (resp != null) {
-			if (modelRomaji.contains(resp)) {
+			if (modelVocabulary.contains(resp)) {
 				JOptionPane.showMessageDialog(this, "That vocabulary item already exists.");
 				return;
 			}
@@ -161,7 +189,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 				return;
 			}
 			if (addVocabulary(new VocabItem(resp, "", "", ""))) {
-				jListRomaji.setSelectedValue(resp, true);
+				jListVocabulary.setSelectedValue(resp, true);
 				logger.log(Level.INFO, "Adding new vocabulary: {0}", resp);
 			}
 			else {
@@ -195,11 +223,11 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		// Clear all of the JList
 		modelCategories.clear();
 		modelLessons.clear();
-		modelRomaji.clear();
+		modelVocabulary.clear();
 		japaneseVocabEditorPanel.clearPanel();
 		setStatusText(" ");
 		currentCategory = null;
-		selectedIndex = -1;
+		selectedVocabIndex = -1;
 	}
 
 	/**
@@ -227,7 +255,17 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		model = new VocabModel();
 		clearGUI();
 		setGUIEnabled(true);
+		japaneseVocabEditorPanel.setEnabled(false);
 		return false;
+	}
+
+	/**
+	 * Returns the currently selected SortMode.
+	 *
+	 * @return
+	 */
+	private SortMode getSortMode() {
+		return ((SortMode) jComboBoxSortMode.getSelectedItem());
 	}
 
 	/**
@@ -295,6 +333,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 			clearGUI();
 			updateCategoryLessonList();
 			setGUIEnabled(true);
+			jListVocabularyValueChanged(new ListSelectionEvent(this, 0, 0, false));
 			setTitle(APP_TITLE + " - " + fileOpened.getAbsolutePath());
 			String status = String.format(
 					"Opened %d categories and %d vocabulary from %s",
@@ -320,12 +359,26 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		return false;
 	}
 
+	/**
+	 * Handle when changes are made to the vocabulary editor. Need to capture
+	 * changes and update the JList appropriately based on what changed.
+	 *
+	 * @param pce
+	 */
 	@Override
 	public void propertyChange(PropertyChangeEvent pce) {
 		if (JapaneseVocabEditorPanel.PROP_MODIFIED_ENGLISH.equals(pce.getPropertyName())) {
-			String ov = pce.getOldValue().toString();
-			String nv = pce.getNewValue().toString();
+			String ov = pce.getOldValue().toString().trim();
+			String nv = pce.getNewValue().toString().trim();
 			boolean renamed = false;
+
+			// Check if trying to use blank value
+			if (nv.isEmpty()) {
+				// Put old value back in
+				japaneseVocabEditorPanel.setEnglish(ov);
+				setStatusText("English values cannot be blank.", 6000);
+				return;
+			}
 
 			// Check if modifying the category
 			if (ov.startsWith("#")) {
@@ -356,7 +409,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 			}
 
 			// Make sure they aren't changing to an existing item
-			if (modelRomaji.contains(nv) && !renamed) {
+			if (modelVocabulary.contains(nv) && !renamed) {
 				JOptionPane.showMessageDialog(this, "A vocabulary item with that English already exists.");
 				// Put the value back to the previous one
 				japaneseVocabEditorPanel.setEnglish(ov);
@@ -365,11 +418,12 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 
 			fileModified = true;
 
-			if (selectedIndex > -1) {
-				vocabulary.get(selectedIndex).setEnglish(nv);
+			if (selectedVocabIndex > -1) {
+				// TODO check what display mode
+				vocabulary.get(selectedVocabIndex).setEnglish(nv);
 			}
 			updateVocabularyList(currentCategory);
-			jListRomaji.setSelectedValue(nv, true);
+			jListVocabulary.setSelectedValue(nv, true);
 		}
 		else if (JapaneseVocabEditorPanel.PROP_MODIFIED_LESSON.equals(pce.getPropertyName())) {
 			// lesson was modified
@@ -385,7 +439,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 	 * @return
 	 */
 	private boolean removeVocabItem(boolean confirm) {
-		int[] sels = jListRomaji.getSelectedIndices();
+		int[] sels = jListVocabulary.getSelectedIndices();
 		if (sels.length > 0) {
 			if (confirm) {
 				StringBuilder msg = new StringBuilder();
@@ -403,16 +457,16 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 			}
 			// Remove from end to start the selected items
 			for (int a = sels.length - 1; a >= 0; a--) {
-				String currItem = jListRomaji.getModel().getElementAt(sels[a]).toString();
+				String currItem = jListVocabulary.getModel().getElementAt(sels[a]).toString();
 				if (currItem.startsWith("#")) {
 					// No removing category label item
 					JOptionPane.showMessageDialog(this, "Cannot delete category label item");
 					continue;
 				}
 				else {
+					String itemString = vocabulary.get(sels[a]).toJSONString();
 					if (model.removeVocabItem(currentCategory, vocabulary.get(sels[a]))) {
-						logger.log(Level.INFO, "Removing vocabulary: {0}",
-								vocabulary.get(sels[a]).toJSONString());
+						logger.log(Level.INFO, "Removing vocabulary: {0}", itemString);
 						fileModified = true;
 					}
 				}
@@ -479,15 +533,19 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 	 * Sets the GUI in an enabled/disabled state based on whether a file is open
 	 * or not so controls can't be used when not appropriate.
 	 *
+	 * TODO if I can establish a way to modify a category while in lesson sort
+	 * mode then I can remove the boolean showing.
+	 *
 	 * @param enable
 	 */
 	private void setGUIEnabled(boolean enable) {
 		// Add/remove buttons only valid for category mode
-		boolean showing = jComboBoxCategoryLesson.getSelectedIndex() == 0;
-		jComboBoxCategoryLesson.setEnabled(enable);
+		boolean showing = getSortMode().equals(SortMode.Categories);
+		jComboBoxSortMode.setEnabled(enable);
+		jComboBoxVocabDisplay.setEnabled(enable);
 		jListCategories.setEnabled(enable);
 		jListLessons.setEnabled(enable);
-		jListRomaji.setEnabled(enable);
+		jListVocabulary.setEnabled(enable);
 		japaneseVocabEditorPanel.setEnabled(enable);
 		// Buttons
 		jButtonCategoryAdd.setEnabled(enable && showing);
@@ -543,7 +601,6 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 			item.addActionListener(categoryPopupListener);
 			jPopupMenuCategories.add(item);
 		}
-//		jPopupMenuCategories.pack();
 	}
 
 	/**
@@ -593,6 +650,22 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 	}
 
 	/**
+	 * Updates the vocabulary listing based on the currently set sort mode.
+	 */
+	private void updateVocabulary() {
+		// Are we in category or lesson mode?
+		SortMode mode = getSortMode();
+		switch (mode) {
+			case Categories:
+				updateVocabularyList(currentCategory);
+				break;
+			case Lessons:
+				updateVocabularyList(currentLesson);
+				break;
+		}
+	}
+
+	/**
 	 * Sets the vocabulary list with vocabulary from the given category. If the
 	 * category is null or does not exist, the list will not be updated.
 	 *
@@ -601,7 +674,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 	private void updateVocabularyList(String category) {
 		// If no model or category, clear out vocabulary list
 		if (model == null || category == null) {
-			modelRomaji.clear();
+			modelVocabulary.clear();
 			return;
 		}
 		ArrayList<VocabItem> items = model.getVocabItems(category);
@@ -609,19 +682,57 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 			return;
 		}
 		// Maintain selection
-		Object selectedItem = jListCategories.getSelectedValue();
+		Object selectedItem = jListVocabulary.getSelectedValue();
+		// TODO get selected indices
+		int selectedIndex = jListVocabulary.getSelectedIndex();
 		vocabulary = items;
-		modelRomaji.clear();
+		modelVocabulary.clear();
 		// Sort vocabulary
+		// TODO should I sort differently depending on display mode?
 		Collections.sort(vocabulary, new EnglishComparator());
 		// Populate list with the English words
+		VocabDisplayMode mode = ((VocabDisplayMode) jComboBoxVocabDisplay.getSelectedItem());
 		for (VocabItem item : vocabulary) {
-			modelRomaji.addElement(item.getEnglish());
+			// Display value according to preference
+			switch (mode) {
+				case English:
+					modelVocabulary.addElement(item.getEnglish());
+					break;
+				case Romaji:
+					String romaji = item.getRomanji();
+					if (romaji.isEmpty()) {
+						romaji = "<" + item.getEnglish() + ">";
+					}
+					modelVocabulary.addElement(romaji);
+					break;
+				case Kana:
+					String kana = item.getKana();
+					// Substitue missing kana
+					if (kana.isEmpty()) {
+						kana = "<" + item.getEnglish() + ">";
+					}
+					modelVocabulary.addElement(kana);
+					break;
+				case Kanji:
+					String kanji = item.getKanji();
+					// Don't want to show empty field for missing kanji
+					if (kanji.isEmpty()) {
+						kanji = "<" + item.getEnglish() + ">";
+					}
+					modelVocabulary.addElement(kanji);
+					break;
+			}
 		}
 		if (selectedItem != null) {
-			jListCategories.setSelectedValue(selectedItem, true);
+			jListVocabulary.setSelectedValue(selectedItem, true);
+			// Check if selection was successful
+			if (!selectedItem.equals(jListVocabulary.getSelectedValue())) {
+				// If not, try using index
+				// This is the case either when the item has been removed,
+				// renamed(?), or switching between display modes.
+				jListVocabulary.setSelectedIndex(selectedIndex);
+			}
 		}
-		fileModified = false;
 	}
 
 	/**
@@ -636,10 +747,10 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		}
 		// Try to maintain selection
 		Object selectedItem = jListLessons.getSelectedValue();
-		modelRomaji.clear();
+		modelVocabulary.clear();
 		vocabulary = model.getVocabItems(lesson);
 		for (VocabItem item : vocabulary) {
-			modelRomaji.addElement(item.getEnglish());
+			modelVocabulary.addElement(item.getEnglish());
 		}
 		if (selectedItem != null) {
 			jListLessons.setSelectedValue(selectedItem, true);
@@ -663,7 +774,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
         jSplitPane = new javax.swing.JSplitPane();
         jPanelCategories = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
-        jComboBoxCategoryLesson = new javax.swing.JComboBox();
+        jComboBoxSortMode = new javax.swing.JComboBox();
         jPanelCategoryLesson = new javax.swing.JPanel();
         jScrollPaneCategories = new javax.swing.JScrollPane();
         jListCategories = new javax.swing.JList();
@@ -673,8 +784,10 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
         jButtonCategoryAdd = new javax.swing.JButton();
         jButtonCategoryDelete = new javax.swing.JButton();
         jPanelRomanji = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
+        jComboBoxVocabDisplay = new javax.swing.JComboBox();
         jScrollPaneRomaji = new javax.swing.JScrollPane();
-        jListRomaji = new javax.swing.JList();
+        jListVocabulary = new javax.swing.JList();
         jPanelRomajiButtons = new javax.swing.JPanel();
         jButtonRomajiAdd = new javax.swing.JButton();
         jButtonRomajiDelete = new javax.swing.JButton();
@@ -719,18 +832,19 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 
         jPanel2.setLayout(new java.awt.BorderLayout());
 
-        jComboBoxCategoryLesson.setModel(new DefaultComboBoxModel(new String[]{"Categories", "Lessons"}));
-        jComboBoxCategoryLesson.addActionListener(new java.awt.event.ActionListener() {
+        jComboBoxSortMode.setModel(new DefaultComboBoxModel(SortMode.values()));
+        jComboBoxSortMode.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBoxCategoryLessonActionPerformed(evt);
+                jComboBoxSortModeActionPerformed(evt);
             }
         });
-        jPanel2.add(jComboBoxCategoryLesson, java.awt.BorderLayout.CENTER);
+        jPanel2.add(jComboBoxSortMode, java.awt.BorderLayout.CENTER);
 
         jPanelCategories.add(jPanel2, java.awt.BorderLayout.PAGE_START);
 
         jPanelCategoryLesson.setLayout(new java.awt.CardLayout());
 
+        jListCategories.setFont(new java.awt.Font("SansSerif", 0, 14)); // NOI18N
         jListCategories.setModel(new DefaultListModel());
         jListCategories.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jListCategories.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
@@ -742,6 +856,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 
         jPanelCategoryLesson.add(jScrollPaneCategories, "categories");
 
+        jListLessons.setFont(new java.awt.Font("SansSerif", 0, 14)); // NOI18N
         jListLessons.setModel(new DefaultListModel());
         jListLessons.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jListLessons.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
@@ -782,13 +897,26 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 
         jPanelRomanji.setLayout(new java.awt.BorderLayout());
 
-        jListRomaji.setModel(new DefaultListModel());
-        jListRomaji.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                jListRomajiValueChanged(evt);
+        jPanel1.setLayout(new java.awt.BorderLayout());
+
+        jComboBoxVocabDisplay.setModel(new DefaultComboBoxModel(VocabDisplayMode.values()));
+        jComboBoxVocabDisplay.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                jComboBoxVocabDisplayItemStateChanged(evt);
             }
         });
-        jScrollPaneRomaji.setViewportView(jListRomaji);
+        jPanel1.add(jComboBoxVocabDisplay, java.awt.BorderLayout.CENTER);
+
+        jPanelRomanji.add(jPanel1, java.awt.BorderLayout.NORTH);
+
+        jListVocabulary.setFont(new java.awt.Font("SansSerif", 0, 16)); // NOI18N
+        jListVocabulary.setModel(new DefaultListModel());
+        jListVocabulary.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                jListVocabularyValueChanged(evt);
+            }
+        });
+        jScrollPaneRomaji.setViewportView(jListVocabulary);
 
         jPanelRomanji.add(jScrollPaneRomaji, java.awt.BorderLayout.CENTER);
 
@@ -935,39 +1063,42 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		}
     }//GEN-LAST:event_jListCategoriesValueChanged
 
-    private void jComboBoxCategoryLessonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxCategoryLessonActionPerformed
-		String pick = jComboBoxCategoryLesson.getSelectedItem().toString();
-		((CardLayout) jPanelCategoryLesson.getLayout()).show(jPanelCategoryLesson, pick.toLowerCase());
+    private void jComboBoxSortModeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxSortModeActionPerformed
+		SortMode pick = getSortMode();
+		((CardLayout) jPanelCategoryLesson.getLayout()).show(
+				jPanelCategoryLesson, pick.name().toLowerCase());
 		updateCategoryLessonList();
-		if (pick.equals("Categories")) {
-			Object sel = jListCategories.getSelectedValue();
-			if (sel != null) {
-				updateVocabularyList(sel.toString());
-			}
-			else {
-				modelRomaji.clear();
-			}
+		switch (pick) {
+			case Categories:
+				Object value = jListCategories.getSelectedValue();
+				if (value != null) {
+					updateVocabularyList(value.toString());
+				}
+				else {
+					modelVocabulary.clear();
+				}
+				break;
+			case Lessons:
+				int sel = jListLessons.getSelectedIndex();
+				if (sel > -1) {
+					updateVocabularyList(sel);
+				}
+				else {
+					modelVocabulary.clear();
+				}
+				break;
 		}
-		else if (pick.equals("Lessons")) {
-			int sel = jListLessons.getSelectedIndex();
-			if (sel > -1) {
-				updateVocabularyList(sel);
-			}
-			else {
-				modelRomaji.clear();
-			}
-		}
-    }//GEN-LAST:event_jComboBoxCategoryLessonActionPerformed
+    }//GEN-LAST:event_jComboBoxSortModeActionPerformed
 
-    private void jListRomajiValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jListRomajiValueChanged
+    private void jListVocabularyValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jListVocabularyValueChanged
 		if (evt.getValueIsAdjusting()) {
 			return;
 		}
-		int[] sel = jListRomaji.getSelectedIndices();
+		int[] sel = jListVocabulary.getSelectedIndices();
 		if (sel.length > 0) {
-			selectedIndex = sel[0];
-			if (selectedIndex > -1) {
-				japaneseVocabEditorPanel.setVocabItem(vocabulary.get(selectedIndex));
+			selectedVocabIndex = sel[0];
+			if (selectedVocabIndex > -1) {
+				japaneseVocabEditorPanel.setVocabItem(vocabulary.get(selectedVocabIndex));
 			}
 			else {
 				japaneseVocabEditorPanel.clearPanel();
@@ -975,7 +1106,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		}
 		// Editor only enabled when one vocabulary is selected
 		japaneseVocabEditorPanel.setEnabled(sel.length == 1);
-    }//GEN-LAST:event_jListRomajiValueChanged
+    }//GEN-LAST:event_jListVocabularyValueChanged
 
     private void jButtonCategoryAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCategoryAddActionPerformed
 		if (model == null) {
@@ -1007,11 +1138,12 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 		if (!evt.getValueIsAdjusting()) {
 			Object selObject = jListLessons.getSelectedValue();
 			if (selObject == null) {
+				currentLesson = -1;
 				return;
 			}
-			int lesson = Integer.parseInt(selObject.toString(), 10);
+			currentLesson = Integer.parseInt(selObject.toString(), 10);
 			// Show vocabulary from given lesson
-			updateVocabularyList(lesson);
+			updateVocabularyList(currentLesson);
 		}
     }//GEN-LAST:event_jListLessonsValueChanged
 
@@ -1038,7 +1170,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
 
     private void jButtonRomajiMoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonRomajiMoveActionPerformed
 		// Make sure at least one vocabulary is selected
-		int[] sels = jListRomaji.getSelectedIndices();
+		int[] sels = jListVocabulary.getSelectedIndices();
 		if (sels.length == 0) {
 			return;
 		}
@@ -1051,6 +1183,12 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
     private void jMenuItemNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemNewActionPerformed
 		createNewFile();
     }//GEN-LAST:event_jMenuItemNewActionPerformed
+
+    private void jComboBoxVocabDisplayItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_jComboBoxVocabDisplayItemStateChanged
+		if (evt.getStateChange() == ItemEvent.SELECTED) {
+			updateVocabulary();
+		}
+    }//GEN-LAST:event_jComboBoxVocabDisplayItemStateChanged
 
 	/**
 	 * @param args the command line arguments
@@ -1110,13 +1248,14 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
     private javax.swing.JButton jButtonRomajiAdd;
     private javax.swing.JButton jButtonRomajiDelete;
     private javax.swing.JButton jButtonRomajiMove;
-    private javax.swing.JComboBox jComboBoxCategoryLesson;
+    private javax.swing.JComboBox jComboBoxSortMode;
+    private javax.swing.JComboBox jComboBoxVocabDisplay;
     private javax.swing.JFileChooser jFileChooserOpen;
     private javax.swing.JFileChooser jFileChooserSave;
     private javax.swing.JLabel jLabelStatus;
     private javax.swing.JList jListCategories;
     private javax.swing.JList jListLessons;
-    private javax.swing.JList jListRomaji;
+    private javax.swing.JList jListVocabulary;
     private javax.swing.JMenuBar jMenuBar;
     private javax.swing.JMenu jMenuFile;
     private javax.swing.JMenuItem jMenuItemCatAdd;
@@ -1131,6 +1270,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame implements PropertyC
     private javax.swing.JMenuItem jMenuItemVocabDelete;
     private javax.swing.JMenuItem jMenuItemVocabMove;
     private javax.swing.JMenu jMenuVocab;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanelButtons;
     private javax.swing.JPanel jPanelCategories;

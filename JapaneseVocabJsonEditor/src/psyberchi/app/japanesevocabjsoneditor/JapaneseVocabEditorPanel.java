@@ -135,9 +135,10 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
         jPanelLessonSpinner = new javax.swing.JPanel();
         jSpinnerLesson = new javax.swing.JSpinner();
 
-        setMinimumSize(new java.awt.Dimension(160, 130));
-        setLayout(new java.awt.GridLayout(0, 1, 0, 4));
+        setMinimumSize(new java.awt.Dimension(160, 155));
+        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.PAGE_AXIS));
 
+        jPanelEnglish.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 0, 2, 0));
         jPanelEnglish.setLayout(new java.awt.BorderLayout());
 
         jTextFieldEnglish.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
@@ -157,6 +158,7 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
         add(jPanelEnglish);
 
+        jPanelRomaji.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 0, 2, 0));
         jPanelRomaji.setLayout(new java.awt.BorderLayout());
 
         jTextFieldRomaji.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
@@ -176,12 +178,12 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
         add(jPanelRomaji);
 
+        jPanelKana.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 0, 2, 0));
         jPanelKana.setLayout(new java.awt.BorderLayout());
 
-        jTextFieldKana.setFont(new java.awt.Font("Hiragino Mincho Pro", 0, 22)); // NOI18N
+        jTextFieldKana.setFont(new java.awt.Font("Serif", 0, 22)); // NOI18N
         jTextFieldKana.setText("かな");
-        jTextFieldKana.setAlignmentY(-2.5F);
-        jTextFieldKana.setMargin(new java.awt.Insets(0, 0, -10, 0));
+        jTextFieldKana.setMargin(new java.awt.Insets(2, 0, 0, 0));
         jTextFieldKana.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 jTextFieldKanaFocusLost(evt);
@@ -197,11 +199,12 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
         add(jPanelKana);
 
+        jPanelKanji.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 0, 2, 0));
         jPanelKanji.setLayout(new java.awt.BorderLayout());
 
-        jTextFieldKanji.setFont(new java.awt.Font("Hiragino Mincho Pro", 0, 22)); // NOI18N
+        jTextFieldKanji.setFont(new java.awt.Font("Serif", 0, 22)); // NOI18N
         jTextFieldKanji.setText("感じ");
-        jTextFieldKanji.setMargin(new java.awt.Insets(0, 0, -10, 0));
+        jTextFieldKanji.setMargin(new java.awt.Insets(2, 0, 0, 0));
         jTextFieldKanji.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 jTextFieldKanjiFocusLost(evt);
@@ -217,6 +220,7 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
         add(jPanelKanji);
 
+        jPanelLesson.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 0, 2, 0));
         jPanelLesson.setLayout(new java.awt.BorderLayout());
 
         jLabelLesson.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
@@ -225,7 +229,7 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
         jLabelLesson.setPreferredSize(new java.awt.Dimension(80, 20));
         jPanelLesson.add(jLabelLesson, java.awt.BorderLayout.WEST);
 
-        jPanelLessonSpinner.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        jPanelLessonSpinner.setLayout(new java.awt.BorderLayout());
 
         jSpinnerLesson.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
         jSpinnerLesson.setModel(new javax.swing.SpinnerNumberModel(0, 0, 100, 1));
@@ -234,7 +238,7 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
                 jSpinnerLessonStateChanged(evt);
             }
         });
-        jPanelLessonSpinner.add(jSpinnerLesson);
+        jPanelLessonSpinner.add(jSpinnerLesson, java.awt.BorderLayout.WEST);
 
         jPanelLesson.add(jPanelLessonSpinner, java.awt.BorderLayout.CENTER);
 
@@ -242,6 +246,9 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jTextFieldEnglishFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldEnglishFocusLost
+		if (vocabItem == null) {
+			return;
+		}
 		String ov = vocabItem.getEnglish();
 		String nv = jTextFieldEnglish.getText();
 		if (!ov.equals(nv)) {
@@ -251,6 +258,9 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_jTextFieldEnglishFocusLost
 
     private void jTextFieldRomajiFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldRomajiFocusLost
+		if (vocabItem == null) {
+			return;
+		}
 		String ov = vocabItem.getRomanji();
 		String nv = jTextFieldRomaji.getText();
 		if (!ov.equals(nv)) {
@@ -260,6 +270,9 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_jTextFieldRomajiFocusLost
 
     private void jTextFieldKanaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldKanaFocusLost
+		if (vocabItem == null) {
+			return;
+		}
 		String ov = vocabItem.getKana();
 		String nv = jTextFieldKana.getText();
 		if (!ov.equals(nv)) {
@@ -269,6 +282,9 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_jTextFieldKanaFocusLost
 
     private void jTextFieldKanjiFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_jTextFieldKanjiFocusLost
+		if (vocabItem == null) {
+			return;
+		}
 		String ov = vocabItem.getKanji();
 		String nv = jTextFieldKanji.getText();
 		if (!ov.equals(nv)) {
@@ -278,6 +294,9 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_jTextFieldKanjiFocusLost
 
     private void jSpinnerLessonStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinnerLessonStateChanged
+		if (vocabItem == null) {
+			return;
+		}
 		int nv = ((javax.swing.SpinnerNumberModel) jSpinnerLesson.getModel()).getNumber().intValue();
 		int ov = vocabItem.getLesson();
 		if (ov != nv) {

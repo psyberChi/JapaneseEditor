@@ -2,11 +2,23 @@
 
 == TODO ==
 
+* Handle modified file properly
+** Warning when opening new file when current modified.
+** Warn when creating new file when current modified.
+** Warn when closing application when there are modifications.
 * Update lesson list when lesson value changed.
+** While in lesson view, added vocabulary could get default "unknown/unsorted" category
 * Add actions to menu items.
+** Exit, Add/Delete Category, Add/Delete/Move Vocabulary.
+** Recent files?
 * VocabModel
 ** Make properties a array of properties so more can be added dynamically.
 * Want to break out main GUI into more files somehow.
+* Preferences
+** Adjust font sizes for each field, and the list text.
+*** Allow font size preference of vocab list based on display mode?
+** Where will the preference file be saved to. ~/vocabeditor.prefs
+* Log application to file accessible by user as need be.
 
 = Hierarchy for programs =
 

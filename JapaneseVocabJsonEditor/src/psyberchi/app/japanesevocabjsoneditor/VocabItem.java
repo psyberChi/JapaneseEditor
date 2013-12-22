@@ -15,20 +15,20 @@ public class VocabItem implements JSONAware {
 
 	private int lesson;
 	private String english;
-	private String romanji;
+	private String romaji;
 	private String kana;
 	private String kanji;
 
 	/**
 	 * Constructor for creating a new vocabulary item.
 	 * @param en the English form.
-	 * @param ro the romanji form.
+	 * @param ro the romaji form.
 	 * @param kn the kana form.
 	 * @param kj the kanji form.
 	 */
 	public VocabItem(String en, String ro, String kn, String kj) {
 		english = en;
-		romanji = ro;
+		romaji = ro;
 		kana = kn;
 		kanji = kj;
 		lesson = 0;
@@ -37,14 +37,14 @@ public class VocabItem implements JSONAware {
 	/**
 	 * Constructor for creating a new vocabulary item.
 	 * @param en the English form.
-	 * @param ro the romanji form.
+	 * @param ro the romaji form.
 	 * @param kn the kana form.
 	 * @param kj the kanji form.
 	 * @param les the lesson the vocabulary is from.
 	 */
 	public VocabItem(String en, String ro, String kn, String kj, int les) {
 		english = en;
-		romanji = ro;
+		romaji = ro;
 		kana = kn;
 		kanji = kj;
 		lesson = les;
@@ -60,7 +60,7 @@ public class VocabItem implements JSONAware {
 				+ " \"ro\":\"%s\", \"kn\":\"%s\","
 				+ " \"kj\":\"%s\", \"ln\":%d}",
 				JSONObject.escape(getEnglish()),
-				JSONObject.escape(getRomanji()),
+				JSONObject.escape(getRomaji()),
 				JSONObject.escape(getKana()),
 				JSONObject.escape(getKanji()),
 				getLesson());
@@ -82,17 +82,17 @@ public class VocabItem implements JSONAware {
 	}
 
 	/**
-	 * @return the romanji
+	 * @return the romaji
 	 */
-	public String getRomanji() {
-		return romanji;
+	public String getRomaji() {
+		return romaji;
 	}
 
 	/**
-	 * @param romanji the romanji to set
+	 * @param romaji the romaji to set
 	 */
-	public void setRomanji(String romanji) {
-		this.romanji = romanji;
+	public void setRomaji(String romaji) {
+		this.romaji = romaji;
 	}
 
 	/**

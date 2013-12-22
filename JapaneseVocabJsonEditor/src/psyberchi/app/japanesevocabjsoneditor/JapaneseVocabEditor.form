@@ -10,10 +10,12 @@
     <Component class="javax.swing.JFileChooser" name="jFileChooserSave">
       <Properties>
         <Property name="dialogType" type="int" value="1"/>
-        <Property name="fileHidingEnabled" type="boolean" value="false"/>
       </Properties>
     </Component>
     <Container class="javax.swing.JPopupMenu" name="jPopupMenuCategories">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+      </AuxValues>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
         <Property name="useNullLayout" type="boolean" value="true"/>
@@ -29,6 +31,9 @@
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItemNew">
               <Properties>
                 <Property name="text" type="java.lang.String" value="New File"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.FileNew.name()" type="code"/>
+                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItemNewActionPerformed"/>
@@ -40,6 +45,9 @@
                   <Connection code="KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())" type="code"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Open File"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.FileOpen.name()" type="code"/>
+                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItemOpenActionPerformed"/>
@@ -51,6 +59,9 @@
                   <Connection code="KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask())" type="code"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Save"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.FileSave.name()" type="code"/>
+                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItemSaveActionPerformed"/>
@@ -59,6 +70,9 @@
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItemSaveAs">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Save as"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.FileSaveAs.name()" type="code"/>
+                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jMenuItemSaveAsActionPerformed"/>
@@ -69,6 +83,9 @@
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItemClose">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Close File"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.FileClose.name()" type="code"/>
+                </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="closeFileAction"/>
@@ -77,6 +94,9 @@
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItemExit">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Exit"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.Exit.name()" type="code"/>
+                </Property>
               </Properties>
             </MenuItem>
           </SubComponents>
@@ -89,29 +109,59 @@
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItemCatAdd">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Add Category"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.CatAdd.name()" type="code"/>
+                </Property>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+              </AuxValues>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItemCatDelete">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Delete Category"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.CatDelete.name()" type="code"/>
+                </Property>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+              </AuxValues>
             </MenuItem>
             <MenuItem class="javax.swing.JPopupMenu$Separator" name="jSeparator2">
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItemVocabAdd">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Add Vocabulary"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.VocabAdd.name()" type="code"/>
+                </Property>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+              </AuxValues>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItemVocabDelete">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Delete Category"/>
+                <Property name="text" type="java.lang.String" value="Delete Vocabulary"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.VocabDelete.name()" type="code"/>
+                </Property>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+              </AuxValues>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="jMenuItemVocabMove">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Move Vocabulary"/>
+                <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="EditorActions.VocabMove.name()" type="code"/>
+                </Property>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+              </AuxValues>
             </MenuItem>
           </SubComponents>
         </Menu>
@@ -133,6 +183,10 @@
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
     <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
+  <Events>
+    <EventHandler event="windowOpened" listener="java.awt.event.WindowListener" parameters="java.awt.event.WindowEvent" handler="formWindowOpened"/>
+    <EventHandler event="windowClosing" listener="java.awt.event.WindowListener" parameters="java.awt.event.WindowEvent" handler="formWindowClosing"/>
+  </Events>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -194,10 +248,14 @@
                         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                           <Connection code="new DefaultComboBoxModel(SortMode.values())" type="code"/>
                         </Property>
+                        <Property name="actionCommand" type="java.lang.String" value="SortModeChange"/>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jComboBoxSortModeActionPerformed"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                      </AuxValues>
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
                           <BorderConstraints direction="Center"/>
@@ -207,6 +265,9 @@
                   </SubComponents>
                 </Container>
                 <Container class="javax.swing.JPanel" name="jPanelCategoryLesson">
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                  </AuxValues>
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
                       <BorderConstraints direction="Center"/>
@@ -237,9 +298,10 @@
                             </Property>
                             <Property name="selectionMode" type="int" value="0"/>
                           </Properties>
-                          <Events>
-                            <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="jListCategoriesValueChanged"/>
-                          </Events>
+                          <AuxValues>
+                            <AuxValue name="JavaCodeGenerator_ListenersCodePost" type="java.lang.String" value="jListCategories.addListSelectionListener(controller);"/>
+                            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                          </AuxValues>
                         </Component>
                       </SubComponents>
                     </Container>
@@ -268,6 +330,9 @@
                           <Events>
                             <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="jListLessonsValueChanged"/>
                           </Events>
+                          <AuxValues>
+                            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                          </AuxValues>
                         </Component>
                       </SubComponents>
                     </Container>
@@ -292,6 +357,7 @@
                           <Font name="Dialog" size="12" style="0"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="+"/>
+                        <Property name="actionCommand" type="java.lang.String" value="CatAdd"/>
                         <Property name="iconTextGap" type="int" value="0"/>
                         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
                           <Insets value="[0, 0, 0, 0]"/>
@@ -303,6 +369,9 @@
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonCategoryAddActionPerformed"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                      </AuxValues>
                     </Component>
                     <Component class="javax.swing.JButton" name="jButtonCategoryDelete">
                       <Properties>
@@ -310,6 +379,7 @@
                           <Font name="Dialog" size="12" style="0"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="-"/>
+                        <Property name="actionCommand" type="java.lang.String" value="DeleteCategory"/>
                         <Property name="iconTextGap" type="int" value="0"/>
                         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
                           <Insets value="[0, 0, 0, 0]"/>
@@ -318,12 +388,15 @@
                           <Dimension value="[24, 20]"/>
                         </Property>
                       </Properties>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                      </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>
               </SubComponents>
             </Container>
-            <Container class="javax.swing.JPanel" name="jPanelRomanji">
+            <Container class="javax.swing.JPanel" name="jPanelVocab">
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout$JSplitPaneConstraintsDescription">
                   <JSplitPaneConstraints position="right"/>
@@ -332,7 +405,7 @@
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
               <SubComponents>
-                <Container class="javax.swing.JPanel" name="jPanel1">
+                <Container class="javax.swing.JPanel" name="jPanelVocabComboBox">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
                       <BorderConstraints direction="North"/>
@@ -346,12 +419,14 @@
                         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                           <Connection code="new DefaultComboBoxModel(VocabDisplayMode.values())" type="code"/>
                         </Property>
+                        <Property name="actionCommand" type="java.lang.String" value="VocabSelect"/>
                       </Properties>
                       <Events>
                         <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="jComboBoxVocabDisplayItemStateChanged"/>
                       </Events>
                       <AuxValues>
                         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value=""/>
+                        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
                       </AuxValues>
                       <Constraints>
                         <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
@@ -361,7 +436,7 @@
                     </Component>
                   </SubComponents>
                 </Container>
-                <Container class="javax.swing.JScrollPane" name="jScrollPaneRomaji">
+                <Container class="javax.swing.JScrollPane" name="jScrollPaneVocab">
                   <AuxValues>
                     <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
                   </AuxValues>
@@ -385,10 +460,13 @@
                       <Events>
                         <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="jListVocabularyValueChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                      </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>
-                <Container class="javax.swing.JPanel" name="jPanelRomajiButtons">
+                <Container class="javax.swing.JPanel" name="jPanelVocabButtons">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
                       <BorderConstraints direction="South"/>
@@ -401,12 +479,15 @@
                     <Property name="verticalGap" type="int" value="0"/>
                   </Layout>
                   <SubComponents>
-                    <Component class="javax.swing.JButton" name="jButtonRomajiAdd">
+                    <Component class="javax.swing.JButton" name="jButtonVocabAdd">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Dialog" size="12" style="0"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="+"/>
+                        <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                          <Connection code="EditorActions.VocabAdd.name()" type="code"/>
+                        </Property>
                         <Property name="iconTextGap" type="int" value="0"/>
                         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
                           <Insets value="[0, 0, 0, 0]"/>
@@ -416,15 +497,21 @@
                         </Property>
                       </Properties>
                       <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonRomajiAddActionPerformed"/>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonVocabAddActionPerformed"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                      </AuxValues>
                     </Component>
-                    <Component class="javax.swing.JButton" name="jButtonRomajiDelete">
+                    <Component class="javax.swing.JButton" name="jButtonVocabDelete">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Dialog" size="12" style="0"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="-"/>
+                        <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                          <Connection code="EditorActions.VocabDelete.name()" type="code"/>
+                        </Property>
                         <Property name="iconTextGap" type="int" value="0"/>
                         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
                           <Insets value="[0, 0, 0, 0]"/>
@@ -434,15 +521,24 @@
                         </Property>
                       </Properties>
                       <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonRomajiDeleteActionPerformed"/>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonVocabDeleteActionPerformed"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                      </AuxValues>
                     </Component>
-                    <Component class="javax.swing.JButton" name="jButtonRomajiMove">
+                    <Component class="javax.swing.JButton" name="jButtonVocabMove">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Dialog" size="12" style="0"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="mv"/>
+                        <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                          <Connection code="EditorActions.VocabMove.name()" type="code"/>
+                        </Property>
+                        <Property name="componentPopupMenu" type="javax.swing.JPopupMenu" editor="org.netbeans.modules.form.ComponentChooserEditor">
+                          <ComponentRef name="jPopupMenuCategories"/>
+                        </Property>
                         <Property name="iconTextGap" type="int" value="0"/>
                         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
                           <Insets value="[2, 2, 2, 2]"/>
@@ -452,8 +548,11 @@
                         </Property>
                       </Properties>
                       <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonRomajiMoveActionPerformed"/>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButtonVocabMoveActionPerformed"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+                      </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -469,6 +568,10 @@
               </Border>
             </Property>
           </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JapaneseVocabEditorPanel(controller, controller)"/>
+            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+          </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout" value="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout$BorderConstraintsDescription">
               <BorderConstraints direction="South"/>
@@ -497,6 +600,9 @@
             </Property>
             <Property name="text" type="java.lang.String" value="Status"/>
           </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="1"/>
+          </AuxValues>
         </Component>
       </SubComponents>
     </Container>

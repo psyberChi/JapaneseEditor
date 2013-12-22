@@ -8,8 +8,10 @@
 ** Warn when closing application when there are modifications.
 * Update lesson list when lesson value changed.
 ** While in lesson view, added vocabulary could get default "unknown/unsorted" category
+** Get a list of lessons when reading in file and caching them. Then can update as items are added and edited.
 * Add actions to menu items.
 ** Exit, Add/Delete Category, Add/Delete/Move Vocabulary.
+** Move Vocabulary: show a sub-menu?
 ** Recent files?
 * VocabModel
 ** Make properties a array of properties so more can be added dynamically.
@@ -31,11 +33,14 @@ Quiz
 Japanese Projects/
 	Quiz (project)
 		QuizModel.java
+		Quiz(Interface).java
+		Question.java
 	Utils/
 		CustomLogger.java
 	Japanese/
-		JapaneseVocabEditor (project)
+		JapaneseUtils (project, no main)
 			VocabModel.java
+		JapaneseVocabEditor (project)
 		KanaQuiz (project)
 		VocabQuiz (project)
 
@@ -51,6 +56,32 @@ Remove Category:
 Add Vocabulary: Ctrl + Shift + V
 Remove Vocabulary: Ctrl + Shift + R
 Move Vocabulary: Ctrl + M
+
+== Data Format ==
+
+Current
+{
+	"category": [
+		{"en":"", "ro":"", "kn":"", "kj":"", "ln":0}
+	]
+}
+
+New?
+{
+	"categories": {
+		"cat-0": "Uncategorized"
+	},
+	"vocabulary": [
+		{
+			"en": "_",
+			"ro": "keiyoushi",
+			"kn": "けいようし",
+			"kj": "形容詞",
+			"ln": 0,
+			"cat": "cat-0" // category id
+		}
+	]
+}
 
 = GUI =
 
@@ -108,3 +139,44 @@ Move Vocabulary: Ctrl + M
 	}
 }
 
+== Preferences ==
+
+Font Sizes {
+	List {
+		SortMode
+		English
+		Romaji
+		Kana
+		Kanji
+	}
+	Editor {
+		English
+		Romaji
+		Kana
+		Kanji
+	}
+	sizes [8-32]
+}
+Font family {}?
+Recently Opened [0..Max Recent] (absolute path)
+Max Recent [0-20]
+Window {
+	size
+	location (check that it is on-screen)
+}
+
+= Thinking =
+
+Command line interaction
+
+Start up takes a file name or creates new file.
+===Main Menu============
+1. List by Category (14) -> Display categories to choose from
+2. List by Lesson (10) -> Display lessons available
+3. Add new category
+4. Add new vocabulary
+5. Save File
+6. Exit
+
+Choose> _
+=======================

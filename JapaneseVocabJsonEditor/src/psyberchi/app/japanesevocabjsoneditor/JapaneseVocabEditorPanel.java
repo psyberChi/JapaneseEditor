@@ -5,6 +5,11 @@
  */
 package psyberchi.app.japanesevocabjsoneditor;
 
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusListener;
+import java.beans.PropertyChangeListener;
+import javax.swing.event.ChangeListener;
+
 /**
  * A JPanel that shows the contents of a VocabItem and allows editing its
  * values. When fields are modified and lose focus they fire property change
@@ -38,12 +43,37 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 	 * The currently set VocabItem in the panel.
 	 */
 	private VocabItem vocabItem = null;
+	private FocusListener focusListener;
+	private ChangeListener changeListener;
 
 	/**
-	 * Creates new form JapaneseVocabEditorPanel
+	 * Constructor.
 	 */
 	public JapaneseVocabEditorPanel() {
 		initComponents();
+		focusListener = new FocusAdapter() {
+		};
+		addListeners(); // ???
+	}
+
+	/**
+	 * Constructor that takes a FocusListener to be used as a MVC controller.
+	 *
+	 * @param focusHandler
+	 */
+	public JapaneseVocabEditorPanel(FocusListener focusHandler, ChangeListener changeHandler) {
+		initComponents();
+		focusListener = focusHandler;
+		changeListener = changeHandler;
+		addListeners();
+	}
+
+	private void addListeners() {
+		jTextFieldEnglish.addFocusListener(focusListener);
+		jTextFieldRomaji.addFocusListener(focusListener);
+		jTextFieldKana.addFocusListener(focusListener);
+		jTextFieldKanji.addFocusListener(focusListener);
+		jSpinnerLesson.addChangeListener(null);
 	}
 
 	/**
@@ -78,7 +108,7 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 		}
 		vocabItem = item;
 		jTextFieldEnglish.setText(item.getEnglish());
-		jTextFieldRomaji.setText(item.getRomanji());
+		jTextFieldRomaji.setText(item.getRomaji());
 		jTextFieldKana.setText(item.getKana());
 		jTextFieldKanji.setText(item.getKanji());
 		jSpinnerLesson.getModel().setValue(item.getLesson());
@@ -100,6 +130,15 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 	}
 
 	/**
+	 * Retrieve the text from the English field.
+	 *
+	 * @return String of the English text field.
+	 */
+	public String getEnglish() {
+		return jTextFieldEnglish.getText();
+	}
+
+	/**
 	 * Sets the text for the English field. A null clears the field.
 	 *
 	 * @param str String to use to fill the field.
@@ -107,6 +146,63 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 	public void setEnglish(String str) {
 		vocabItem.setEnglish(str);
 		jTextFieldEnglish.setText(str);
+	}
+
+	/**
+	 * Retrieve the text from the Romaji field.
+	 *
+	 * @return String of the Romaji text field.
+	 */
+	public String getRomaji() {
+		return jTextFieldRomaji.getText();
+	}
+
+	/**
+	 * Sets the text for the Romaji field. A null clears the field.
+	 *
+	 * @param str String to use to fill the field.
+	 */
+	public void setRomaji(String str) {
+		vocabItem.setRomaji(str);
+		jTextFieldRomaji.setText(str);
+	}
+
+	/**
+	 * Retrieve the text from the Kana field.
+	 *
+	 * @return String of the Kana text field.
+	 */
+	public String getKana() {
+		return jTextFieldKana.getText();
+	}
+
+	/**
+	 * Sets the text for the Kana field. A null clears the field.
+	 *
+	 * @param str String to use to fill the field.
+	 */
+	public void setKana(String str) {
+		vocabItem.setKana(str);
+		jTextFieldKana.setText(str);
+	}
+
+	/**
+	 * Retrieve the text from the Kanji field.
+	 *
+	 * @return String of the Kanji text field.
+	 */
+	public String getKanji() {
+		return jTextFieldKanji.getText();
+	}
+
+	/**
+	 * Sets the text for the Kanji field. A null clears the field.
+	 *
+	 * @param str String to use to fill the field.
+	 */
+	public void setKanji(String str) {
+		vocabItem.setKanji(str);
+		jTextFieldKanji.setText(str);
 	}
 
 	/**
@@ -261,10 +357,10 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 		if (vocabItem == null) {
 			return;
 		}
-		String ov = vocabItem.getRomanji();
+		String ov = vocabItem.getRomaji();
 		String nv = jTextFieldRomaji.getText();
 		if (!ov.equals(nv)) {
-			vocabItem.setRomanji(nv);
+			vocabItem.setRomaji(nv);
 			firePropertyChange(PROP_MODIFIED_ROMAJI, ov, nv);
 		}
     }//GEN-LAST:event_jTextFieldRomajiFocusLost
@@ -316,10 +412,10 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
     private javax.swing.JPanel jPanelLesson;
     private javax.swing.JPanel jPanelLessonSpinner;
     private javax.swing.JPanel jPanelRomaji;
-    private javax.swing.JSpinner jSpinnerLesson;
-    private javax.swing.JTextField jTextFieldEnglish;
-    private javax.swing.JTextField jTextFieldKana;
-    private javax.swing.JTextField jTextFieldKanji;
-    private javax.swing.JTextField jTextFieldRomaji;
+    public javax.swing.JSpinner jSpinnerLesson;
+    public javax.swing.JTextField jTextFieldEnglish;
+    public javax.swing.JTextField jTextFieldKana;
+    public javax.swing.JTextField jTextFieldKanji;
+    public javax.swing.JTextField jTextFieldRomaji;
     // End of variables declaration//GEN-END:variables
 }

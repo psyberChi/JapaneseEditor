@@ -119,7 +119,7 @@ public class JsonVocabIO {
 							vocabCount++;
 							if (logger.isLoggable(Level.FINE)) {
 								String s = String.format("%s: %s, %s, %s, %s, %d",
-										cat, item.getEnglish(), item.getRomanji(),
+										cat, item.getEnglish(), item.getRomaji(),
 										item.getKana(), item.getKanji(), item.getLesson());
 								logger.log(Level.FINE, "Added new vocab: {0}", s);
 							}

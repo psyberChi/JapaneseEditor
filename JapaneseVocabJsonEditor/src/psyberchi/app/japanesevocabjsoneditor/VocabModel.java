@@ -20,7 +20,6 @@ import org.json.simple.JSONAware;
  * @author Kendall Conrad
  */
 public class VocabModel implements JSONAware {
-
 	private static final Logger logger = Logger.getLogger(VocabModel.class.getCanonicalName());
 	private HashMap<String, ArrayList<VocabItem>> categories = new HashMap<String, ArrayList<VocabItem>>();
 
@@ -86,7 +85,7 @@ public class VocabModel implements JSONAware {
 			logger.log(Level.WARNING, "Vocabulary already exist: {0}", item.getEnglish());
 			return false;
 		}
-		logger.log(Level.WARNING, "Category doesn't exist: {0}", cat);
+		logger.log(Level.WARNING, "Category doesn''t exist: {0}", new Object[]{cat});
 		return false;
 	}
 
@@ -223,5 +222,4 @@ public class VocabModel implements JSONAware {
 		}
 		return false;
 	}
-
 }

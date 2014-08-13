@@ -65,6 +65,10 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 * Whether or not the currently open file has been modified.
 	 */
 	private boolean fileModified = false;
+	/**
+	 * Keeps status as to whether or not a file is currently open.
+	 */
+	private boolean fileOpen = false;
 	private boolean timedStatus = false;
 	/**
 	 * The ListModel for the category JList.
@@ -226,6 +230,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				closeFile();
 				break;
 			case Exit:
+				vocabEditor.dispose();
 				break;
 			case CatAdd:
 				if (model == null) {
@@ -245,10 +250,13 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				}
 				break;
 			case CatDelete:
+				// TODO How to handle vocab that exist in category?
 				break;
 			case VocabAdd:
+				addVocabulary();
 				break;
 			case VocabDelete:
+				removeVocabItem(true);
 				break;
 			case VocabMove:
 				String chosenCat = ae.getActionCommand();
@@ -289,25 +297,30 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 						Object value = vocabEditor.jListCategories.getSelectedValue();
 						if (value != null) {
 							updateVocabularyList(value.toString());
+							setVocabControlStates(true);
 						}
 						else {
 							modelVocabulary.clear();
+							setVocabControlStates(false);
 						}
-						setGUIEnabled(true);
+//						setGUIEnabled(true);
 						break;
 					case Lessons:
 						int sel = vocabEditor.jListLessons.getSelectedIndex();
 						if (sel > -1) {
 							updateVocabularyList(sel);
+							setVocabControlStates(true);
 						}
 						else {
 							modelVocabulary.clear();
+							setVocabControlStates(false);
 						}
-						setGUIEnabled(false);
+//						setGUIEnabled(true);
 						break;
 				}
 				break;
 			case VocabSelect:
+				// TODO
 				break;
 		}
 	}
@@ -401,6 +414,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		model = null;
 		vocabEditor.setTitle(APP_TITLE);
 		setFileModified(false);
+		setFileOpen(false);
 	}
 
 	/**
@@ -416,7 +430,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		// Create a new model
 		model = new VocabModel();
 		clearGUI();
-		setGUIEnabled(true);
+//		setGUIEnabled(true);
 		vocabEditor.japaneseVocabEditorPanel.setEnabled(false);
 		return false;
 	}
@@ -484,6 +498,13 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		return fileModified;
 	}
 
+	/**
+	 * @return the fileOpen
+	 */
+	public boolean isFileOpen() {
+		return fileOpen;
+	}
+
 	public boolean isTimedStatus() {
 		return timedStatus;
 	}
@@ -498,13 +519,31 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		// TODO
 		JComboBox src = (JComboBox) ie.getSource();
 
+		// Vocabulary item sort order selection change
 		if (src.equals(vocabEditor.jComboBoxVocabDisplay)) {
 			if (ie.getStateChange() == ItemEvent.SELECTED) {
 				updateVocabulary();
 			}
 		}
 		else if (src.equals(vocabEditor.jComboBoxSortMode)) {
-
+			boolean isSelected = false;
+			switch (getSortMode()) {
+				case Categories:
+					isSelected = !vocabEditor.jListCategories.isSelectionEmpty();
+					vocabEditor.jButtonCategoryAdd.setEnabled(true);
+					vocabEditor.jButtonCategoryDelete.setEnabled(true);
+					vocabEditor.jMenuItemCatAdd.setEnabled(true);
+					vocabEditor.jMenuItemCatDelete.setEnabled(true);
+					break;
+				case Lessons:
+					isSelected = !vocabEditor.jListLessons.isSelectionEmpty();
+					vocabEditor.jButtonCategoryAdd.setEnabled(false);
+					vocabEditor.jButtonCategoryDelete.setEnabled(false);
+					vocabEditor.jMenuItemCatAdd.setEnabled(false);
+					vocabEditor.jMenuItemCatDelete.setEnabled(false);
+					break;
+			}
+			setVocabControlStates(isSelected);
 		}
 	}
 
@@ -571,8 +610,11 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 			fileOpened = file;
 			model = JsonVocabIO.readJsonFile(fileOpened);
 			clearGUI();
+			setFileOpen(true);
 			updateCategoryLessonList();
-			setGUIEnabled(true);
+//			setGUIEnabled(true);
+			vocabEditor.jComboBoxSortMode.setEnabled(true);
+
 //			jListVocabularyValueChanged(new ListSelectionEvent(this, 0, 0, false));
 			valueChanged(new ListSelectionEvent(vocabEditor.jListVocabulary, 0, 0, false));
 			vocabEditor.setTitle(APP_TITLE + " - " + fileOpened.getAbsolutePath());
@@ -610,11 +652,11 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		// TODO
 
 		// Listen for JapaneseEditorPanel items
-		logger.log(Level.INFO, "PropChange: {0} = {1} / {2}", new Object[]{
-			pce.getPropertyName(),
-			pce.getOldValue(),
-			pce.getNewValue()
-		});
+//		logger.log(Level.INFO, "PropChange: {0} = {1} / {2}", new Object[]{
+//			pce.getPropertyName(),
+//			pce.getOldValue(),
+//			pce.getNewValue()
+//		});
 
 		if (pce.getPropertyName().equals("text")) {
 		}
@@ -788,10 +830,18 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		return false;
 	}
 
+	/**
+	 * Sets the current selected category.
+	 *
+	 * @param cat The new selected category.
+	 */
 	public void setCurrentCategory(String cat) {
-		if (cat != currentCat) {
+		if (cat != null && !cat.equals(currentCat)) {
 			currentCat = cat;
 			// fire current cat change?
+		}
+		else {
+			currentCat = cat;
 		}
 	}
 
@@ -815,36 +865,47 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	}
 
 	/**
+	 * @param fileOpen the fileOpen to set
+	 */
+	public void setFileOpen(boolean fileOpen) {
+		this.fileOpen = fileOpen;
+	}
+
+	/**
 	 * Sets the GUI in an enabled/disabled state based on whether a file is open
 	 * or not so controls can't be used when not appropriate.
 	 *
 	 * TODO if I can establish a way to modify a category while in lesson sort
-	 * mode then I can remove the boolean showing.
+	 * mode then I can remove the boolean sortedByCategory.
 	 *
 	 * @param enable
 	 */
 	public void setGUIEnabled(boolean enable) {
+		enable = enable && isFileOpen();
+		boolean sortedByCategory = getSortMode().equals(SortMode.Categories);
+		boolean catSelected = sortedByCategory && (getCurrentCategory() != null);
+		boolean lessonSelected = !sortedByCategory && (getCurrentLesson() >= 0);
+		boolean vocabSelected = getCurrentVocabIndex() >= 0;
+
 		// Add/remove buttons only valid for category mode
-//		boolean showing = getSortMode().equals(SortMode.Categories);
-		boolean showing = getSortMode().equals(SortMode.Categories);
 		vocabEditor.jComboBoxSortMode.setEnabled(enable);
-		vocabEditor.jComboBoxVocabDisplay.setEnabled(enable);
-		vocabEditor.jListCategories.setEnabled(enable);
-		vocabEditor.jListLessons.setEnabled(enable);
-		vocabEditor.jListVocabulary.setEnabled(enable);
-		vocabEditor.japaneseVocabEditorPanel.setEnabled(enable);
+		vocabEditor.jComboBoxVocabDisplay.setEnabled(enable /*&& (catSelected || lessonSelected)*/);
+//		vocabEditor.jListCategories.setEnabled(enable);
+//		vocabEditor.jListLessons.setEnabled(enable);
+//		vocabEditor.jListVocabulary.setEnabled(enable);
+		vocabEditor.japaneseVocabEditorPanel.setEnabled(enable /*&& vocabSelected*/);
 		// Buttons
-		vocabEditor.jButtonCategoryAdd.setEnabled(enable && showing);
-		vocabEditor.jButtonCategoryDelete.setEnabled(enable && showing);
-		vocabEditor.jButtonVocabAdd.setEnabled(enable && showing);
-		vocabEditor.jButtonVocabDelete.setEnabled(enable && showing);
-		vocabEditor.jButtonVocabMove.setEnabled(enable && showing);
+		vocabEditor.jButtonCategoryAdd.setEnabled(enable /*&& sortedByCategory*/);
+		vocabEditor.jButtonCategoryDelete.setEnabled(enable /*&& sortedByCategory*/);
+		vocabEditor.jButtonVocabAdd.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		vocabEditor.jButtonVocabDelete.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		vocabEditor.jButtonVocabMove.setEnabled(enable /*&& catSelected && sortedByCategory*/);
 		// Menu items
-		vocabEditor.jMenuItemCatAdd.setEnabled(enable && showing);
-		vocabEditor.jMenuItemCatDelete.setEnabled(enable && showing);
-		vocabEditor.jMenuItemVocabAdd.setEnabled(enable && showing);
-		vocabEditor.jMenuItemVocabDelete.setEnabled(enable && showing);
-		vocabEditor.jMenuItemVocabMove.setEnabled(enable && showing);
+		vocabEditor.jMenuItemCatAdd.setEnabled(enable /*&& sortedByCategory*/);
+		vocabEditor.jMenuItemCatDelete.setEnabled(enable /*&& sortedByCategory*/);
+		vocabEditor.jMenuItemVocabAdd.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		vocabEditor.jMenuItemVocabDelete.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		vocabEditor.jMenuItemVocabMove.setEnabled(enable /*&& catSelected && sortedByCategory*/);
 	}
 
 	/**
@@ -907,6 +968,31 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 //			item.addActionListener(categoryPopupListener);
 			item.addActionListener(this);
 			menu.add(item);
+		}
+	}
+
+	/**
+	 * Sets the GUI controls related to whether a vocabulary item is currently
+	 * selected or not.
+	 *
+	 * @param enable
+	 */
+	private void setVocabControlStates(boolean enable) {
+		vocabEditor.jComboBoxVocabDisplay.setEnabled(enable);
+		// Buttons
+		vocabEditor.jButtonVocabAdd.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		vocabEditor.jButtonVocabDelete.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		vocabEditor.jButtonVocabMove.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		// Menu items
+		vocabEditor.jMenuItemVocabAdd.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		vocabEditor.jMenuItemVocabDelete.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		vocabEditor.jMenuItemVocabMove.setEnabled(enable /*&& catSelected && sortedByCategory*/);
+		// JList
+		vocabEditor.jListVocabulary.setEnabled(enable);
+		// Enable editor panel as appropriate
+		vocabEditor.japaneseVocabEditorPanel.setEnabled(enable);
+		if (vocabEditor.jListVocabulary.getSelectedIndex() < 0) {
+			vocabEditor.japaneseVocabEditorPanel.clearPanel();
 		}
 	}
 
@@ -1040,6 +1126,10 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				vocabEditor.jListVocabulary.setSelectedIndex(selectedIndex);
 			}
 		}
+		// If resulting update leaves no selected category, then disable vocabulary controls.
+		if (vocabEditor.jListLessons.isSelectionEmpty()) {
+			setVocabControlStates(false);
+		}
 	}
 
 	/**
@@ -1063,6 +1153,10 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 			vocabEditor.jListLessons.setSelectedValue(selectedItem, true);
 		}
 		setFileModified(false);
+		// If resulting update leaves no selected lesson, then disable vocabulary controls.
+		if (vocabEditor.jListLessons.isSelectionEmpty()) {
+			setVocabControlStates(false);
+		}
 	}
 
 	/**
@@ -1078,12 +1172,18 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		// category change
 		if (src.equals(vocabEditor.jListCategories)) {
 			if (!evt.getValueIsAdjusting() && src.getSelectedValue() != null) {
-				// Switch between showing categories or lessons
+				// Switch between sortedByCategory categories or lessons
 				currentCat = src.getSelectedValue().toString();
 				if (model == null || currentCat == null) {
+					updateVocabularyList(currentCat);
+					setVocabControlStates(false);
 					return;
 				}
 				updateVocabularyList(currentCat);
+				setVocabControlStates(true);
+			}
+			else if (src.getSelectedValue() == null) {
+				setVocabControlStates(false);
 			}
 		}
 		// lesson change
@@ -1092,13 +1192,16 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				Object selObject = src.getSelectedValue();
 				if (selObject == null) {
 					currentLesson = -1;
+					setVocabControlStates(false);
 					return;
 				}
 				currentLesson = Integer.parseInt(selObject.toString(), 10);
 				// Show vocabulary from given lesson
 				updateVocabularyList(currentLesson);
+				setVocabControlStates(true);
 			}
 		}
+		// Vocabulary item selection changed
 		else if (src.equals(vocabEditor.jListVocabulary)) {
 			// vocab selection
 			if (evt.getValueIsAdjusting()) {

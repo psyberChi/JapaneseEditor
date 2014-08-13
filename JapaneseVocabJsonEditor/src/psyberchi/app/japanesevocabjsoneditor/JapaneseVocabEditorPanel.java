@@ -122,11 +122,15 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 	 */
 	@Override
 	public void setEnabled(boolean enable) {
-		jTextFieldEnglish.setEnabled(enable);
-		jTextFieldRomaji.setEnabled(enable);
-		jTextFieldKana.setEnabled(enable);
-		jTextFieldKanji.setEnabled(enable);
-		jSpinnerLesson.setEnabled(enable);
+		// Assuming all controls have same enabled state
+		// Only change enabled state if it is in fact changing
+		if (jTextFieldEnglish.isEnabled() != enable) {
+			jTextFieldEnglish.setEnabled(enable);
+			jTextFieldRomaji.setEnabled(enable);
+			jTextFieldKana.setEnabled(enable);
+			jTextFieldKanji.setEnabled(enable);
+			jSpinnerLesson.setEnabled(enable);
+		}
 	}
 
 	/**

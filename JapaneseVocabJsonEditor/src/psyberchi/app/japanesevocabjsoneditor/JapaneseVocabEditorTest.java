@@ -5,6 +5,8 @@
  */
 package psyberchi.app.japanesevocabjsoneditor;
 
+import psyberchi.app.japanesevocabjsoneditor.model.JsonVocabIO;
+import psyberchi.app.japanesevocabjsoneditor.model.VocabModel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;

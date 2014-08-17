@@ -3,8 +3,12 @@
  *
  *  GNU GPL License.
  */
-package psyberchi.app.japanesevocabjsoneditor;
+package psyberchi.app.japanesevocabjsoneditor.controller;
 
+import psyberchi.app.japanesevocabjsoneditor.model.JsonVocabIO;
+import psyberchi.app.japanesevocabjsoneditor.model.EnglishComparator;
+import psyberchi.app.japanesevocabjsoneditor.model.VocabItem;
+import psyberchi.app.japanesevocabjsoneditor.model.VocabModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;

@@ -3,7 +3,7 @@
  *
  *  GNU GPL License.
  */
-package psyberchi.app.japanesevocabjsoneditor;
+package psyberchi.app.japanesevocabjsoneditor.model;
 
 import java.util.ArrayList;
 import java.util.Collections;

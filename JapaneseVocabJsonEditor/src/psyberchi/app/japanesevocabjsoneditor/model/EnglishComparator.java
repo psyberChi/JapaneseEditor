@@ -3,8 +3,9 @@
  *
  *  GNU GPL License.
  */
-package psyberchi.app.japanesevocabjsoneditor;
+package psyberchi.app.japanesevocabjsoneditor.model;
 
+import psyberchi.app.japanesevocabjsoneditor.model.VocabItem;
 import java.util.Comparator;
 
 /**

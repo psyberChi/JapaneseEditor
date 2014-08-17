@@ -3,8 +3,10 @@
  *
  *  GNU GPL License.
  */
-package psyberchi.app.japanesevocabjsoneditor;
+package psyberchi.app.japanesevocabjsoneditor.model;
 
+import psyberchi.app.japanesevocabjsoneditor.model.VocabItem;
+import psyberchi.app.japanesevocabjsoneditor.model.VocabModel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;

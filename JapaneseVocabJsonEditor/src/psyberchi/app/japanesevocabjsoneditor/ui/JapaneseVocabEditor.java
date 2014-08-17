@@ -13,11 +13,11 @@ import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.KeyStroke;
-import psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorController;
-import psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorController.EditorActions;
-import psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorController.EditorPrefs;
-import psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorController.SortMode;
-import psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorController.VocabDisplayMode;
+import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController;
+import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController.EditorActions;
+import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController.EditorPrefs;
+import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController.SortMode;
+import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController.VocabDisplayMode;
 
 /**
  *

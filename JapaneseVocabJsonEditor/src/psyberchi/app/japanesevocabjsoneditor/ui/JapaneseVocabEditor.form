@@ -341,7 +341,7 @@
             </Container>
           </SubComponents>
         </Container>
-        <Component class="psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorPanel" name="japaneseVocabEditorPanel">
+        <Component class="psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditorPanel" name="japaneseVocabEditorPanel">
           <Properties>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">

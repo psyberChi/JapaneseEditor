@@ -10,7 +10,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
-import static psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditor.logLevel;
+import psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor;
+import static psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor.logLevel;
 
 /**
  *

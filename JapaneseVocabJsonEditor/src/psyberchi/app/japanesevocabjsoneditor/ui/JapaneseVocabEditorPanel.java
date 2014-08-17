@@ -3,7 +3,7 @@
  *
  *  GNU GPL License.
  */
-package psyberchi.app.japanesevocabjsoneditor;
+package psyberchi.app.japanesevocabjsoneditor.ui;
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusListener;

@@ -3,7 +3,7 @@
  *
  *  GNU GPL License.
  */
-package psyberchi.app.japanesevocabjsoneditor;
+package psyberchi.app.japanesevocabjsoneditor.ui;
 
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
@@ -18,7 +18,6 @@ import psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorController.Edito
 import psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorController.EditorPrefs;
 import psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorController.SortMode;
 import psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorController.VocabDisplayMode;
-import psyberchi.app.japanesevocabjsoneditor.ui.ListSelector;
 
 /**
  *
@@ -394,7 +393,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JSplitPane jSplitPane;
-    public psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditorPanel japaneseVocabEditorPanel;
+    public psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditorPanel japaneseVocabEditorPanel;
     public psyberchi.app.japanesevocabjsoneditor.ui.ListSelector listSelectorCategoryLesson;
     public psyberchi.app.japanesevocabjsoneditor.ui.ListSelector listSelectorVocabulary;
     // End of variables declaration//GEN-END:variables

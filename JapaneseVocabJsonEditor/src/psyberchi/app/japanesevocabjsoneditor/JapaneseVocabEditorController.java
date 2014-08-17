@@ -40,7 +40,9 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.json.simple.parser.ParseException;
-import static psyberchi.app.japanesevocabjsoneditor.JapaneseVocabEditor.APP_TITLE;
+import psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor;
+import static psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor.APP_TITLE;
+import psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditorPanel;
 
 /**
  * @author Kendall Conrad

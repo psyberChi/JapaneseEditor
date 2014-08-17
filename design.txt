@@ -6,21 +6,25 @@
 ** Warning when opening new file when current modified.
 ** Warn when creating new file when current modified.
 ** Warn when closing application when there are modifications.
-* Update lesson list when lesson value changed.
-** While in lesson view, added vocabulary could get default "unknown/unsorted" category
-** Get a list of lessons when reading in file and caching them. Then can update as items are added and edited.
 * Add actions to menu items.
 ** Exit, Add/Delete Category, Add/Delete/Move Vocabulary.
 ** Move Vocabulary: show a sub-menu?
 ** Recent files?
 * VocabModel
 ** Make properties a array of properties so more can be added dynamically.
-* Want to break out main GUI into more files somehow.
 * Preferences
+** Create class that extends Properties?
 ** Adjust font sizes for each field, and the list text.
 *** Allow font size preference of vocab list based on display mode?
 ** Where will the preference file be saved to. ~/vocabeditor.prefs
 * Log application to file accessible by user as need be.
+
+=== MVC Tasks ===
+
+* Update lesson list when lesson value changed.
+** While in lesson view, added vocabulary could get default "unknown/unsorted" category
+** Get a list of lessons when reading in file and caching them. Then can update as items are added and edited.
+* Break listeners out into separate classes?
 
 = Hierarchy for programs =
 

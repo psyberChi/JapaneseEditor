@@ -7,8 +7,8 @@ package psyberchi.app.japanesevocabjsoneditor;
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusListener;
-import java.beans.PropertyChangeListener;
 import javax.swing.event.ChangeListener;
+import psyberchi.app.japanesevocabjsoneditor.VocabItem;
 
 /**
  * A JPanel that shows the contents of a VocabItem and allows editing its

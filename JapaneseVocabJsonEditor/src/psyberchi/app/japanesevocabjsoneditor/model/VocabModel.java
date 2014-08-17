@@ -21,7 +21,7 @@ import org.json.simple.JSONAware;
  */
 public class VocabModel implements JSONAware {
 	private static final Logger logger = Logger.getLogger(VocabModel.class.getCanonicalName());
-	private HashMap<String, ArrayList<VocabItem>> categories = new HashMap<String, ArrayList<VocabItem>>();
+	private HashMap<String, ArrayList<VocabItem>> categories = new HashMap<>();
 
 	public VocabModel() {
 		//
@@ -97,7 +97,7 @@ public class VocabModel implements JSONAware {
 	public List<String> getCategories() {
 		Set<String> keyset = categories.keySet();
 		Iterator<String> iter = keyset.iterator();
-		List<String> cats = new ArrayList<String>();
+		List<String> cats = new ArrayList<>();
 		int a = 0;
 		while (iter.hasNext()) {
 			cats.add(iter.next());
@@ -121,7 +121,7 @@ public class VocabModel implements JSONAware {
 	 * @return
 	 */
 	public List<Integer> getLessons() {
-		ArrayList<Integer> lessons = new ArrayList<Integer>();
+		ArrayList<Integer> lessons = new ArrayList<>();
 		for (Map.Entry<String, ArrayList<VocabItem>> set : categories.entrySet()) {
 			for (VocabItem item : set.getValue()) {
 				if (!lessons.contains(item.getLesson())) {
@@ -164,7 +164,7 @@ public class VocabModel implements JSONAware {
 	 * @return
 	 */
 	public ArrayList<VocabItem> getVocabItems(int lesson) {
-		ArrayList<VocabItem> items = new ArrayList<VocabItem>();
+		ArrayList<VocabItem> items = new ArrayList<>();
 		for (Map.Entry<String, ArrayList<VocabItem>> set : categories.entrySet()) {
 			for (VocabItem item : set.getValue()) {
 				// If the lesson number matches and it's not a category label

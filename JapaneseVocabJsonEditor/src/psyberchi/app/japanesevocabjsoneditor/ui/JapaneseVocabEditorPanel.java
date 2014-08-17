@@ -18,7 +18,6 @@ import psyberchi.app.japanesevocabjsoneditor.model.VocabItem;
  * @author Kendall Conrad
  */
 public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
-
 	/**
 	 * Property for when the English field is modified.
 	 */

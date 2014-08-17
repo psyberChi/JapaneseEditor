@@ -12,7 +12,6 @@ import org.json.simple.JSONObject;
  * @author Kendall Conrad
  */
 public class VocabItem implements JSONAware {
-
 	private int lesson;
 	private String english;
 	private String romaji;
@@ -21,6 +20,7 @@ public class VocabItem implements JSONAware {
 
 	/**
 	 * Constructor for creating a new vocabulary item.
+	 *
 	 * @param en the English form.
 	 * @param ro the romaji form.
 	 * @param kn the kana form.
@@ -36,6 +36,7 @@ public class VocabItem implements JSONAware {
 
 	/**
 	 * Constructor for creating a new vocabulary item.
+	 *
 	 * @param en the English form.
 	 * @param ro the romaji form.
 	 * @param kn the kana form.
@@ -52,6 +53,7 @@ public class VocabItem implements JSONAware {
 
 	/**
 	 * Returns a JSON formatted String representing the vocabulary item.
+	 *
 	 * @return
 	 */
 	@Override
@@ -136,5 +138,4 @@ public class VocabItem implements JSONAware {
 	public void setLesson(int lesson) {
 		this.lesson = lesson;
 	}
-
 }

@@ -142,7 +142,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
         jPanelMain = new javax.swing.JPanel();
         jSplitPane = new javax.swing.JSplitPane();
         listSelectorCategoryLesson = new ListSelector(new DefaultComboBoxModel(SortMode.values()), new DefaultListModel());
-        listSelectorVocabulary = new ListSelector(new DefaultComboBoxModel(VocabDisplayMode.values()), new DefaultListModel<Object>());
+        listSelectorVocabulary = new ListSelector(new DefaultComboBoxModel(VocabDisplayMode.values()), new DefaultListModel());
         ;
         japaneseVocabEditorPanel = new JapaneseVocabEditorPanel(controller, controller);
         jPanelButtons = new javax.swing.JPanel();

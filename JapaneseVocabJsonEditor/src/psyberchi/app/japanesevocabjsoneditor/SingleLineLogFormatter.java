@@ -3,7 +3,6 @@
  *
  *  GNU GPL License.
  */
-
 package psyberchi.app.japanesevocabjsoneditor;
 
 import java.text.SimpleDateFormat;
@@ -15,7 +14,6 @@ import java.util.logging.LogRecord;
  * @author Kendall Conrad
  */
 public class SingleLineLogFormatter extends Formatter {
-
 	private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	@Override
@@ -31,5 +29,4 @@ public class SingleLineLogFormatter extends Formatter {
 				formatMessage(lr));
 		return fs;
 	}
-
 }

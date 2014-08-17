@@ -18,10 +18,9 @@ import javax.swing.JList;
  * @author Kendall Conrad
  */
 public class ListSelector extends javax.swing.JPanel {
-
 	private DefaultComboBoxModel selectorModel = new DefaultComboBoxModel();
 	private DefaultListModel listModel = new DefaultListModel();
-	private HashMap<String, JButton> buttonHash = new HashMap<String, JButton>();
+	private HashMap<String, JButton> buttonHash = new HashMap<>();
 
 	/**
 	 * Constructor.

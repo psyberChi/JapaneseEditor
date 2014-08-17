@@ -5,8 +5,6 @@
  */
 package psyberchi.app.japanesevocabjsoneditor.model;
 
-import psyberchi.app.japanesevocabjsoneditor.model.VocabItem;
-import psyberchi.app.japanesevocabjsoneditor.model.VocabModel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -24,7 +22,6 @@ import org.json.simple.parser.ParseException;
  * @author Kendall Conrad
  */
 public class JsonVocabIO {
-
 	private static final Logger logger = Logger.getLogger(JsonVocabIO.class.getCanonicalName());
 
 	/**
@@ -166,5 +163,4 @@ public class JsonVocabIO {
 		}
 		return true;
 	}
-
 }

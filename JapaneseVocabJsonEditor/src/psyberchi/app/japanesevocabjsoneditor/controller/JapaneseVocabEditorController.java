@@ -71,7 +71,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	/**
 	 * A container for all of the current set of vocabulary.
 	 */
-	private ArrayList<VocabItem> vocabulary = new ArrayList<VocabItem>();
+	private ArrayList<VocabItem> vocabulary = new ArrayList<>();
 	/**
 	 * Whether or not the currently open file has been modified.
 	 */
@@ -101,7 +101,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 */
 	private int currentLesson = -1;
 	/**
-	 * The currently selected index of the vocbulary item.
+	 * The currently selected index of the vocabulary item.
 	 */
 	private int currentVocabIdx = -1;
 	/**

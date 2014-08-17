@@ -5,7 +5,6 @@
  */
 package psyberchi.app.japanesevocabjsoneditor.controller;
 
-import psyberchi.app.japanesevocabjsoneditor.model.JsonVocabIO;
 import psyberchi.app.japanesevocabjsoneditor.model.EnglishComparator;
 import psyberchi.app.japanesevocabjsoneditor.model.VocabItem;
 import psyberchi.app.japanesevocabjsoneditor.model.VocabModel;
@@ -17,9 +16,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +28,6 @@ import java.util.prefs.Preferences;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -43,7 +38,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import org.json.simple.parser.ParseException;
 import psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor;
 import static psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor.APP_TITLE;
 import psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditorPanel;
@@ -73,14 +67,6 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 */
 	private ArrayList<VocabItem> vocabulary = new ArrayList<>();
 	/**
-	 * Whether or not the currently open file has been modified.
-	 */
-	private boolean fileModified = false;
-	/**
-	 * Keeps status as to whether or not a file is currently open.
-	 */
-	private boolean fileOpen = false;
-	/**
 	 * Whether the status message is a timed one.
 	 */
 	private boolean timedStatus = false;
@@ -97,6 +83,10 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 */
 	public DefaultListModel modelVocabulary = null;
 	/**
+	 * Handle for doing file IO capabilities.
+	 */
+	private VocabModelIO vocabIo = new VocabModelIO();
+	/**
 	 * The currently selected lesson.
 	 */
 	private int currentLesson = -1;
@@ -105,21 +95,9 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 */
 	private int currentVocabIdx = -1;
 	/**
-	 * The currently open fileOpened.
-	 */
-	private File fileOpened = null;
-	/**
 	 * Handle to the main editor.
 	 */
 	private JapaneseVocabEditor vocabEditor;
-	/**
-	 * The file chooser when saving documents.
-	 */
-	private JFileChooser jFileChooserSave = new JFileChooser();
-	/**
-	 * The file chooser when opening documents.
-	 */
-	private JFileChooser jFileChooserOpen = new JFileChooser();
 	/**
 	 * The currently selected category
 	 */
@@ -307,18 +285,13 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				createNewFile();
 				break;
 			case FileOpen:
-				// Prompt user for JSON fileOpened
-				int resp = jFileChooserOpen.showOpenDialog(null);
-				if (JFileChooser.APPROVE_OPTION == resp) {
-					openFile(jFileChooserOpen.getSelectedFile());
-				}
+				openFile();
 				break;
 			case FileSave:
-				// Assuming the opened file is the one we want to save to
-				saveFile(fileOpened);
+				vocabIo.saveFile(model);
 				break;
 			case FileSaveAs:
-				saveAsFile();
+				vocabIo.saveAsFile(model);
 				break;
 			case FileClose:
 				closeFile();
@@ -345,6 +318,10 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				break;
 			case CatDelete:
 				// TODO How to handle vocab that exist in category?
+				// Could block removing category while vocab exist, or
+				// could move them to uncategorized category, or
+				// could prompt user if all vocab should be deleted as well.
+				// Forcing user to move them first makes sense.
 				break;
 			case VocabAdd:
 				addVocabulary();
@@ -353,32 +330,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				removeVocabItem(true);
 				break;
 			case VocabMove:
-				String chosenCat = ae.getActionCommand();
-				int[] sels;
-
-				// Show popup menu
-				if (chosenCat.equals(EditorActions.VocabMove.name())) {
-					// Make sure at least one vocabulary is selected
-					sels = vocabEditor.listSelectorVocabulary.getList().getSelectedIndices();
-					if (sels.length == 0) {
-						return;
-					}
-					// Show popup menu with category options
-					setupCategoryPopup(vocabEditor.jPopupMenuCategories, true);
-					vocabEditor.jPopupMenuCategories.show(vocabEditor.jButtonVocabMove, 0, 0);
-				}
-				else {
-					// Carry out menu action
-					// @todo Trim prefix
-					chosenCat = chosenCat.replaceAll("VocabMove_", "");
-					sels = vocabEditor.listSelectorVocabulary.getList().getSelectedIndices();
-					// Move each one individually
-					for (int a = sels.length - 1; a >= 0; a--) {
-						VocabItem vocab = vocabulary.get(sels[a]);
-						moveVocabItem(vocab, currentCat, chosenCat);
-					}
-					updateVocabularyList(currentCat);
-				}
+				moveVocabulary(ae.getActionCommand());
 				break;
 			case SortModeChange:
 				updateCategoryLessonList();
@@ -429,7 +381,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 			updateCategoryLessonList();
 			// Highlight the new category
 			firePropertyChange(null, PROP_CatSelectionChange, currentCat, cat);
-			fileModified = true;
+			vocabIo.setFileModified(true);
 			return true;
 		}
 		return false;
@@ -472,7 +424,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		if (model != null && !vocabulary.contains(item)) {
 			if (model.addVocabItem(currentCat, item)) {
 				updateVocabularyList(currentCat);
-				fileModified = true;
+				vocabIo.setFileModified(true);
 				logger.log(Level.INFO, "Adding new vocabulary: {0}", item.toJSONString());
 				return true;
 			}
@@ -498,12 +450,11 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 * Clears the GUI and resets the open file object.
 	 */
 	public void closeFile() {
-		clearGUI();
-		fileOpened = null;
-		model = null;
-		vocabEditor.setTitle(APP_TITLE);
-		setFileModified(false);
-		setFileOpen(false);
+		if (vocabIo.closeFile()) {
+			clearGUI();
+			model = null;
+			vocabEditor.setTitle(APP_TITLE);
+		}
 	}
 
 	/**
@@ -612,22 +563,6 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	}
 
 	/**
-	 * Returns whether or not the current file is modified.
-	 *
-	 * @return
-	 */
-	public boolean isFileModified() {
-		return fileModified;
-	}
-
-	/**
-	 * @return the fileOpen
-	 */
-	public boolean isFileOpen() {
-		return fileOpen;
-	}
-
-	/**
 	 * Returns whether or not using a timed status.
 	 *
 	 * @return
@@ -706,7 +641,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				updateVocabularyList(currentCat);
 				logger.log(Level.INFO, "Moving vocab from {0} to {1}: {2}",
 						new Object[]{fromCat, toCat, item.toJSONString()});
-				setFileModified(true);
+				vocabIo.setFileModified(true);
 				return true;
 			}
 			else {
@@ -719,52 +654,64 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	}
 
 	/**
-	 * Opens a given {@link File} and creates a {@link VocabModel} from it that
-	 * is used to load in the categories.
+	 * Handles the VocabMove event with given action command string.
 	 *
-	 * @param fileOpened
+	 * @param chosenCat
 	 * @return
 	 */
-	private boolean openFile(File file) {
-		if (file == null || !file.canRead()) {
-			return false;
+	private boolean moveVocabulary(String chosenCat) {
+		int[] sels;
+		// Show popup menu
+		if (chosenCat.equals(EditorActions.VocabMove.name())) {
+			// Make sure at least one vocabulary is selected
+			sels = vocabEditor.listSelectorVocabulary.getList().getSelectedIndices();
+			if (sels.length == 0) {
+				return true;
+			}
+			// Show popup menu with category options
+			setupCategoryPopup(vocabEditor.jPopupMenuCategories, true);
+			vocabEditor.jPopupMenuCategories.show(vocabEditor.jButtonVocabMove, 0, 0);
 		}
-		// Check if current file is modified
-		if (isFileModified()) {
-			// TODO
-		}
-		try {
-			fileOpened = file;
-			model = JsonVocabIO.readJsonFile(fileOpened);
-			clearGUI();
-			setFileOpen(true);
-			updateCategoryLessonList();
-			vocabEditor.listSelectorCategoryLesson.getSelector().setEnabled(true);
-
-			valueChanged(new ListSelectionEvent(vocabEditor.listSelectorVocabulary.getList(), 0, 0, false));
-			vocabEditor.setTitle(APP_TITLE + " - " + fileOpened.getAbsolutePath());
-			String status = String.format(
-					"Opened %d categories and %d vocabulary from %s",
-					model.getCategoryCount(),
-					model.getVocabCount(),
-					fileOpened.getName());
-			setStatusText(status, 5000);
-			setFileModified(false);
-			return true;
-		}
-		catch (FileNotFoundException ex) {
-			logger.log(Level.SEVERE, null, ex);
-			setStatusText("File not found", 3000);
-		}
-		catch (IOException ex) {
-			logger.log(Level.SEVERE, null, ex);
-			setStatusText("Could not read file", 3000);
-		}
-		catch (ParseException ex) {
-			logger.log(Level.SEVERE, null, ex);
-			setStatusText("Could not parse file", 4000);
+		else {
+			// Carry out menu action
+			// @todo Trim prefix
+			chosenCat = chosenCat.replaceAll("VocabMove_", "");
+			sels = vocabEditor.listSelectorVocabulary.getList().getSelectedIndices();
+			// Move each one individually
+			for (int a = sels.length - 1; a >= 0; a--) {
+				VocabItem vocab = vocabulary.get(sels[a]);
+				moveVocabItem(vocab, currentCat, chosenCat);
+			}
+			updateVocabularyList(currentCat);
 		}
 		return false;
+	}
+
+	/**
+	 * Handles the open file event, asking the user for a file and setting the
+	 * VocabModel appropriately based on a successful open.
+	 */
+	private void openFile() {
+		try {
+			model = vocabIo.openFile();
+			if (model != null) {
+				clearGUI();
+				updateCategoryLessonList();
+				vocabEditor.listSelectorCategoryLesson.getSelector().setEnabled(true);
+				valueChanged(new ListSelectionEvent(vocabEditor.listSelectorVocabulary.getList(), 0, 0, false));
+				vocabEditor.setTitle(APP_TITLE + " - " + vocabIo.getFileOpened().getAbsolutePath());
+				String status = String.format(
+						"Opened %d categories and %d vocabulary from %s",
+						model.getCategoryCount(),
+						model.getVocabCount(),
+						vocabIo.getFileOpened().getName());
+				setStatusText(status, 5000);
+
+			}
+		}
+		catch (Exception ex) {
+			setStatusText(ex.getLocalizedMessage(), 3000);
+		}
 	}
 
 	@Override
@@ -837,7 +784,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				return;
 			}
 
-			setFileModified(true);
+			vocabIo.setFileModified(true);
 
 			if (getCurrentVocabIndex() > -1) {
 				// TODO check what display mode
@@ -848,7 +795,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		}
 		else if (JapaneseVocabEditorPanel.PROP_MODIFIED_LESSON.equals(pce.getPropertyName())) {
 			// lesson was modified
-			setFileModified(true);
+			vocabIo.setFileModified(true);
 		}
 	}
 
@@ -888,64 +835,13 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 					String itemString = getVocabulary(sels[a]).toJSONString();
 					if (model.removeVocabItem(currentCat, vocabulary.get(sels[a]))) {
 						logger.log(Level.INFO, "Removing vocabulary: {0}", itemString);
-						setFileModified(true);
+						vocabIo.setFileModified(true);
 					}
 				}
 			}
 			updateVocabularyList(currentCat);
 			setStatusText("Removed " + sels.length + " items", 3000);
 			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Prompts the user for a new file to save to.
-	 */
-	private boolean saveAsFile() {
-		if (model == null) {
-			return false;
-		}
-		if (fileOpened != null) {
-			jFileChooserSave.setCurrentDirectory(fileOpened.getParentFile());
-		}
-		int resp = jFileChooserSave.showSaveDialog(null);
-		if (JOptionPane.OK_OPTION == resp) {
-			File file = jFileChooserSave.getSelectedFile();
-			if (file.getParentFile().canWrite()) {
-				fileOpened = file;
-				return saveFile(fileOpened);
-			}
-			else {
-				JOptionPane.showMessageDialog(null,
-						"Cannot write to chosen directory.",
-						"Cannot save",
-						JOptionPane.ERROR_MESSAGE);
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Saves the vocabulary model to a given file.
-	 *
-	 * @param file
-	 */
-	private boolean saveFile(File file) {
-		if (file == null || model == null) {
-			return false;
-		}
-		if (file.getParentFile().canWrite()) {
-			JsonVocabIO.writeJsonFile(fileOpened, model);
-			setStatusText("File saved: " + fileOpened.getAbsolutePath(), 4000);
-			setFileModified(false);
-			return true;
-		}
-		else {
-			JOptionPane.showMessageDialog(null,
-					"Cannot write to chosen directory.",
-					"Cannot save",
-					JOptionPane.ERROR_MESSAGE);
 		}
 		return false;
 	}
@@ -988,27 +884,6 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	}
 
 	/**
-	 * Sets whether or not the currently open file is modified.
-	 *
-	 * @param mod
-	 */
-	public void setFileModified(boolean mod) {
-		if (mod != fileModified) {
-			fileModified = mod;
-			// fire property change somewhere
-		}
-	}
-
-	/**
-	 * Sets the currently open file to a given file.
-	 *
-	 * @param fileOpen the fileOpen to set
-	 */
-	public void setFileOpen(boolean fileOpen) {
-		this.fileOpen = fileOpen;
-	}
-
-	/**
 	 * Sets the GUI in an enabled/disabled state based on whether a file is open
 	 * or not so controls can't be used when not appropriate.
 	 *
@@ -1018,7 +893,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 * @param enable
 	 */
 	public void setGUIEnabled(boolean enable) {
-		enable = enable && isFileOpen();
+		enable = enable && vocabIo.isFileOpen();
 
 		// Add/remove buttons only valid for category mode
 		vocabEditor.listSelectorCategoryLesson.getSelector().setEnabled(enable);
@@ -1292,7 +1167,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		if (selectedItem != null) {
 			list.setSelectedValue(selectedItem, true);
 		}
-		setFileModified(false);
+		vocabIo.setFileModified(false);
 		// If resulting update leaves no selected lesson, then disable vocabulary controls.
 		if (list.isSelectionEmpty()) {
 			setVocabControlStates(false);

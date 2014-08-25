@@ -1,0 +1,208 @@
+/*
+ *  TimedStatusBar.java
+ *
+ *  GNU GPL License.
+ */
+package psyberchi.app.japanesevocabjsoneditor.ui;
+
+import java.util.TimerTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.Icon;
+
+/**
+ * A status bar component that show textual messages with or without an icon for
+ * a set amount of time. The default time is 5000ms (5 seconds).
+ *
+ * @author Kendall Conrad
+ * @created 2014-08-24
+ */
+public class TimedStatusBar extends javax.swing.JPanel {
+	/**
+	 * Keeps track of when the status bar is busy using a thread safe type.
+	 */
+	private AtomicBoolean busy = new AtomicBoolean(false);
+	/**
+	 * A synchronized queue of TimedStatus messages for the status bar.
+	 */
+	private LinkedBlockingQueue<TimedStatus> statusQueue = new LinkedBlockingQueue<>();
+	/**
+	 * The timer object for the status text task.
+	 */
+	private java.util.Timer timer;
+
+	/**
+	 * Creates new TimedStatusBar
+	 */
+	public TimedStatusBar() {
+		initComponents();
+		timer = new java.util.Timer();
+	}
+
+	/**
+	 * Sets the text of the status bar from a TimedStatus object once its
+	 * through the queue of any other status messages.
+	 *
+	 * @param ts A TimedStatus object to show
+	 * @param fromQueue boolean saying whether or not this TimedStatus was
+	 * already taken from the queue so needs to be allowed through.
+	 */
+	private void doStatusTask() {
+		if (busy.compareAndSet(false, true)) {
+			if (!statusQueue.isEmpty()) {
+				TimedStatus t = statusQueue.remove();
+				privateSetStatus(t);
+				timer.schedule(getStatusDoneTask(), t.time);
+			}
+			else {
+				// Ensure we're not busy when queue is empty
+				busy.set(false);
+			}
+		}
+	}
+
+	/**
+	 * Gets a task to run at the completion of the status task.
+	 *
+	 * @return a TimerTask for clearing the status message
+	 */
+	private TimerTask getStatusDoneTask() {
+		return new TimerTask() {
+			@Override
+			public void run() {
+				privateSetStatus(new TimedStatus(" ", null, 0));
+				busy.set(false);
+				doStatusTask();
+			}
+		};
+	}
+
+	/**
+	 * Internally used method to set the status bar text and icon.
+	 *
+	 * @param ts
+	 */
+	private void privateSetStatus(TimedStatus ts) {
+		jLabelStatus.setText(ts.status);
+		jLabelIcon.setIcon(ts.icon);
+	}
+
+	/**
+	 * Sets the status message to the given text and will remove the text after
+	 * a default value of 5000 milliseconds.
+	 *
+	 * @param status String message to display in status bar.
+	 */
+	public void setStatus(String status) {
+		setStatus(status, null, 5000);
+	}
+
+	/**
+	 * Sets the status message to the given status text and will remove the text
+	 * after the given ms milliseconds.
+	 *
+	 * @param status String message to display in status bar.
+	 * @param ms the milliseconds to leave the status message showing.
+	 */
+	public void setStatus(String status, int ms) {
+		setStatus(status, null, ms);
+	}
+
+	/**
+	 * Sets the status message to the given status text and icon then will
+	 * remove the text after the given ms milliseconds.
+	 *
+	 * @param status
+	 * @param icon
+	 * @param ms
+	 */
+	public void setStatus(String status, Icon icon, int ms) {
+		// make sure non-empty string
+		if (status == null || status.isEmpty()) {
+			status = " ";
+		}
+		statusQueue.add(new TimedStatus(status, icon, ms));
+		doStatusTask();
+	}
+
+	/**
+	 * Helper class that contains a status message, an optional icon, and the
+	 * time in milliseconds the status message will be displayed.
+	 */
+	private class TimedStatus {
+		String status;
+		Icon icon = null;
+		int time;
+
+		/**
+		 * Constructor taking a text message and milliseconds for length of time
+		 * the status message will show.
+		 *
+		 * @param s text message for status bar
+		 * @param t number of milliseconds to show status
+		 */
+		public TimedStatus(String s, int t) {
+			status = s;
+			time = t;
+		}
+
+		/**
+		 * Constructor taking a text message, and Icon, and milliseconds for
+		 * length of time the status message will show.
+		 *
+		 * @param s text message for status bar
+		 * @param i the Icon to show with the status message.
+		 * @param t number of milliseconds to show status
+		 */
+		public TimedStatus(String s, Icon i, int t) {
+			status = s;
+			icon = i;
+			time = t;
+		}
+	}
+
+	public static void main(String[] args) {
+		// Test code
+		javax.swing.JFrame frame = new javax.swing.JFrame("Test TimedStatusBar");
+		final TimedStatusBar bar = new TimedStatusBar();
+		bar.setPreferredSize(new java.awt.Dimension(280, 20));
+		frame.add(bar);
+		frame.setPreferredSize(new java.awt.Dimension(300, 70));
+		frame.pack();
+		frame.setVisible(true);
+
+		bar.setStatus("One", 1000);
+		bar.setStatus("Two", 1000);
+		bar.setStatus("Three", 1000);
+
+		(new java.util.Timer()).schedule(new TimerTask() {
+			@Override
+			public void run() {
+				bar.setStatus("Last", 2000);
+			}
+		}, 6000);
+	}
+
+	/**
+	 * This method is called from within the constructor to initialize the form.
+	 * WARNING: Do NOT modify this code. The content of this method is always
+	 * regenerated by the Form Editor.
+	 */
+	@SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jLabelIcon = new javax.swing.JLabel();
+        jLabelStatus = new javax.swing.JLabel();
+
+        setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 2, 2));
+        add(jLabelIcon);
+
+        jLabelStatus.setText("Msg");
+        add(jLabelStatus);
+    }// </editor-fold>//GEN-END:initComponents
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    public javax.swing.JLabel jLabelIcon;
+    public javax.swing.JLabel jLabelStatus;
+    // End of variables declaration//GEN-END:variables
+}

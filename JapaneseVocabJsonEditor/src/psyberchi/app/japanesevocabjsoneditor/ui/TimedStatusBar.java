@@ -49,8 +49,8 @@ public class TimedStatusBar extends javax.swing.JPanel {
 	 */
 	private void doStatusTask() {
 		if (busy.compareAndSet(false, true)) {
-			if (!statusQueue.isEmpty()) {
-				TimedStatus t = statusQueue.remove();
+			TimedStatus t;
+			if ((t = statusQueue.poll()) != null) {
 				privateSetStatus(t);
 				timer.schedule(getStatusDoneTask(), t.time);
 			}
@@ -180,7 +180,7 @@ public class TimedStatusBar extends javax.swing.JPanel {
 			public void run() {
 				bar.setStatus("Last", 2000);
 			}
-		}, 6000);
+		}, 4000);
 	}
 
 	/**

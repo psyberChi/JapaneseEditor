@@ -242,6 +242,7 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
         jTextFieldEnglish.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
         jTextFieldEnglish.setText("english");
+        jTextFieldEnglish.setMargin(new java.awt.Insets(0, 0, 2, 0));
         jTextFieldEnglish.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 jTextFieldEnglishFocusLost(evt);
@@ -262,6 +263,7 @@ public class JapaneseVocabEditorPanel extends javax.swing.JPanel {
 
         jTextFieldRomaji.setFont(new java.awt.Font("Verdana", 0, 14)); // NOI18N
         jTextFieldRomaji.setText("romaji");
+        jTextFieldRomaji.setMargin(new java.awt.Insets(0, 0, 2, 0));
         jTextFieldRomaji.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 jTextFieldRomajiFocusLost(evt);

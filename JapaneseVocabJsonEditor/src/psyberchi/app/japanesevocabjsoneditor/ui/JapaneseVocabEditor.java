@@ -15,7 +15,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.KeyStroke;
 import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController;
 import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController.EditorActions;
-import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController.EditorPrefs;
 import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController.SortMode;
 import psyberchi.app.japanesevocabjsoneditor.controller.JapaneseVocabEditorController.VocabDisplayMode;
 
@@ -101,25 +100,25 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
 	 * Load user preferences.
 	 */
 	private void loadPreferences() {
-		try {
-			listSelectorCategoryLesson.getSelector().setSelectedIndex(
-					prefs.getInt(EditorPrefs.SortMode.toString(), 0));
-			listSelectorVocabulary.getSelector().setSelectedIndex(
-					prefs.getInt(EditorPrefs.VocabDisplayMode.toString(), 0));
-		}
-		catch (Exception ex) {
-			logger.log(Level.SEVERE, "Problem loading preference: {0}", ex.getLocalizedMessage());
-		}
+//		try {
+//			listSelectorCategoryLesson.getSelector().setSelectedIndex(
+//					prefs.getInt(EditorPrefs.SortMode.toString(), 0));
+//			listSelectorVocabulary.getSelector().setSelectedIndex(
+//					prefs.getInt(EditorPrefs.VocabDisplayMode.toString(), 0));
+//		}
+//		catch (Exception ex) {
+//			logger.log(Level.SEVERE, "Problem loading preference: {0}", ex.getLocalizedMessage());
+//		}
 	}
 
 	/**
 	 * Saves user settings.
 	 */
 	private void savePreferences() {
-		prefs.putInt(EditorPrefs.SortMode.toString(),
-				listSelectorCategoryLesson.getSelector().getSelectedIndex());
-		prefs.putInt(EditorPrefs.VocabDisplayMode.toString(),
-				listSelectorVocabulary.getSelector().getSelectedIndex());
+//		prefs.putInt(EditorPrefs.SortMode.toString(),
+//				listSelectorCategoryLesson.getSelector().getSelectedIndex());
+//		prefs.putInt(EditorPrefs.VocabDisplayMode.toString(),
+//				listSelectorVocabulary.getSelector().getSelectedIndex());
 	}
 
 	/**

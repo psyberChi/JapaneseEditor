@@ -2,22 +2,15 @@
 
 == TODO ==
 
-* Handle modified file properly
-** Warning when opening new file when current modified.
-** Warn when creating new file when current modified.
-** Warn when closing application when there are modifications.
-* Add actions to menu items.
-** Exit, Add/Delete Category, Add/Delete/Move Vocabulary.
-** Move Vocabulary: show a sub-menu?
+* Menu items
 ** Recent files?
-* VocabModel
-** Make properties a array of properties so more can be added dynamically.
 * Preferences
-** Create class that extends Properties?
+** Create JDailog to show preferences
 ** Adjust font sizes for each field, and the list text.
 *** Allow font size preference of vocab list based on display mode?
 ** Where will the preference file be saved to. ~/vocabeditor.prefs
 * Log application to file accessible by user as need be.
+* TimedStatusBar: Keep queue of timed msgs
 
 === MVC Tasks ===
 
@@ -25,6 +18,7 @@
 ** While in lesson view, added vocabulary could get default "unknown/unsorted" category
 ** Get a list of lessons when reading in file and caching them. Then can update as items are added and edited.
 * Break listeners out into separate classes?
+* Move The enums and constants to new class.
 
 = Hierarchy for programs =
 

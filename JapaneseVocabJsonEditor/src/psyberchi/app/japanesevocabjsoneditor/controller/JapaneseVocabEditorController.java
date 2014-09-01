@@ -5,9 +5,9 @@
  */
 package psyberchi.app.japanesevocabjsoneditor.controller;
 
-import psyberchi.app.japanesevocabjsoneditor.model.EnglishComparator;
-import psyberchi.app.japanesevocabjsoneditor.model.VocabItem;
-import psyberchi.app.japanesevocabjsoneditor.model.VocabModel;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -18,13 +18,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
-import java.util.prefs.Preferences;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -38,6 +38,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import psyberchi.app.japanesevocabjsoneditor.model.EditorPreferences;
+import psyberchi.app.japanesevocabjsoneditor.model.EditorPreferences.FieldName;
+import psyberchi.app.japanesevocabjsoneditor.model.EnglishComparator;
+import psyberchi.app.japanesevocabjsoneditor.model.VocabItem;
+import psyberchi.app.japanesevocabjsoneditor.model.VocabModel;
 import psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor;
 import static psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor.APP_TITLE;
 import psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditorPanel;
@@ -53,7 +58,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	/**
 	 * Preference object.
 	 */
-	private static final Preferences prefs = Preferences.userNodeForPackage(JapaneseVocabEditor.class);
+	private EditorPreferences prefs;
 	/**
 	 * Property that fires when the selected category or lesson has changed.
 	 */
@@ -82,6 +87,10 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 * The ListModel for the vocabulary JList.
 	 */
 	public DefaultListModel modelVocabulary = null;
+	private static final String defaultFontNameEn = "Verdana";
+	private static final String defaultFontNameJp = "serif";
+	private Font defaultFont = new Font(defaultFontNameEn, Font.PLAIN, 16);
+	private HashMap<FieldName, Font> fontMap = new HashMap<>();
 	/**
 	 * Handle for doing file IO capabilities.
 	 */
@@ -110,53 +119,6 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 * The vocabulary model holding categories and vocabulary.
 	 */
 	private VocabModel model = null;
-
-	/**
-	 * Enumeration of preferences available for the editor application.
-	 */
-	public static enum EditorPrefs {
-		/**
-		 * The sort mode chosen
-		 */
-		SortMode,
-		/**
-		 * Mode to display vocabulary
-		 */
-		VocabDisplayMode,
-		/**
-		 * Font chosen to display the English field
-		 */
-		FontEnglish,
-		/**
-		 * Font chosen to display the romaji field
-		 */
-		FontRomaji,
-		/**
-		 * Font chosen to display the kana field
-		 */
-		FontKana,
-		/**
-		 * Font chosen to display the kanji field
-		 */
-		FontKanji,
-		/**
-		 * Max number of recently opened files to remember
-		 */
-		RecentRememberMax,
-		/**
-		 * Recently open file prefix
-		 */
-		RecentOpen,
-		/**
-		 * Number of recently remembered files
-		 */
-		RecentOpenNum;
-
-		@Override
-		public String toString() {
-			return "EditorPreferences." + name();
-		}
-	};
 
 	/**
 	 * ActionCommand list for the editor.
@@ -259,7 +221,9 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 */
 	public JapaneseVocabEditorController(JapaneseVocabEditor editor) {
 		vocabEditor = editor;
-		prefs.addPreferenceChangeListener(this);
+		prefs = new EditorPreferences();
+		prefs.getPrefs().addPreferenceChangeListener(this);
+		vocabIo.addPropertyChangeListener(this);
 	}
 
 	/**
@@ -272,6 +236,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		// Set the list selector panels with the new models
 		vocabEditor.listSelectorCategoryLesson.setListModel(modelCategories);
 		vocabEditor.listSelectorVocabulary.setListModel(modelVocabulary);
+		readPreferences();
 	}
 
 	@Override
@@ -297,7 +262,9 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				closeFile();
 				break;
 			case Exit:
-				vocabEditor.dispose();
+				if (vocabIo.closeFile(model)) {
+					vocabEditor.dispose();
+				}
 				break;
 			case CatAdd:
 				if (model == null) {
@@ -312,7 +279,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 					else {
 						// Add category label item
 						VocabItem vi = new VocabItem("#" + newCat, "", "", "");
-						addVocabulary(vi);
+						addVocabulary(vi, newCat);
 					}
 				}
 				break;
@@ -374,13 +341,13 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 * @return
 	 */
 	private boolean addCategory(String cat) {
-		if (model != null && cat != null && !modelCategories.contains(currentCat)) {
+		if (model != null && cat != null && !modelCategories.contains(cat)) {
 			model.addCategory(cat);
 			logger.log(Level.INFO, "Adding new category: {0}", cat);
 			// Make sure it's sorted after add
 			updateCategoryLessonList();
 			// Highlight the new category
-			firePropertyChange(null, PROP_CatSelectionChange, currentCat, cat);
+			firePropertyChange(vocabEditor.jButtonCategoryAdd, PROP_CatSelectionChange, currentCat, cat);
 			vocabIo.setFileModified(true);
 			return true;
 		}
@@ -415,15 +382,25 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	}
 
 	/**
-	 * Adds a new {@link VocabItem} to currently selected category.
+	 * Adds a VocabItem to the currently selected category.
 	 *
-	 * @param item
-	 * @return
+	 * @param item a VocabItem to be added, which must not be null.
+	 * @return true if successfully added, false otherwise.
 	 */
 	public boolean addVocabulary(VocabItem item) {
-		if (model != null && !vocabulary.contains(item)) {
-			if (model.addVocabItem(currentCat, item)) {
-				updateVocabularyList(currentCat);
+		return addVocabulary(item, currentCat);
+	}
+
+	/**
+	 * Adds a new {@link VocabItem} to the given category.
+	 *
+	 * @param item the VocabItem to add.
+	 * @return true if successfully added, false otherwise.
+	 */
+	public boolean addVocabulary(VocabItem item, String category) {
+		if (model != null && item != null && !vocabulary.contains(item)) {
+			if (model.addVocabItem(category, item)) {
+				updateVocabularyList(category);
 				vocabIo.setFileModified(true);
 				logger.log(Level.INFO, "Adding new vocabulary: {0}", item.toJSONString());
 				return true;
@@ -449,12 +426,13 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	/**
 	 * Clears the GUI and resets the open file object.
 	 */
-	public void closeFile() {
-		if (vocabIo.closeFile()) {
+	public boolean closeFile() {
+		if (vocabIo.closeFile(model)) {
 			clearGUI();
 			model = null;
-			vocabEditor.setTitle(APP_TITLE);
+			return true;
 		}
+		return false;
 	}
 
 	/**
@@ -463,14 +441,21 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 * @return
 	 */
 	private boolean createNewFile() {
-		// Check if any currently open file is modified
-		// TODO
 		// Close off any existing file
-		closeFile();
-		// Create a new model
-		model = new VocabModel();
-		clearGUI();
-		vocabEditor.japaneseVocabEditorPanel.setEnabled(false);
+		if (closeFile()) {
+			// Create a new model
+			model = new VocabModel();
+			clearGUI();
+			vocabEditor.listSelectorCategoryLesson.getSelector().setEnabled(true);
+			// Trigger event so add/remove category buttons get enabled
+			itemStateChanged(new ItemEvent(
+					vocabEditor.listSelectorCategoryLesson.getSelector(),
+					ItemEvent.ITEM_STATE_CHANGED, this, ItemEvent.SELECTED));
+			vocabEditor.japaneseVocabEditorPanel.setEnabled(false);
+			vocabIo.setFileModified(true);
+			setStatusText("Created new file");
+			return true;
+		}
 		return false;
 	}
 
@@ -578,13 +563,30 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 */
 	@Override
 	public void itemStateChanged(ItemEvent ie) {
-		// TODO
 		JComboBox src = (JComboBox) ie.getSource();
 
 		// Vocabulary item sort order selection change
 		if (src.equals(vocabEditor.listSelectorVocabulary.getSelector())) {
 			if (ie.getStateChange() == ItemEvent.SELECTED) {
 				updateVocabulary();
+				// set font for type
+				VocabDisplayMode mode = (VocabDisplayMode) src.getSelectedItem();
+				Font font = defaultFont;
+				switch (mode) {
+					case English:
+						font = fontMap.get(FieldName.FONT_LIST_ENGLISH);
+						break;
+					case Romaji:
+						font = fontMap.get(FieldName.FONT_LIST_ROMAJI);
+						break;
+					case Kana:
+						font = fontMap.get(FieldName.FONT_LIST_KANA);
+						break;
+					case Kanji:
+						font = fontMap.get(FieldName.FONT_LIST_KANJI);
+						break;
+				}
+				vocabEditor.listSelectorVocabulary.getList().setFont(font);
 			}
 		}
 		else if (src.equals(vocabEditor.listSelectorCategoryLesson.getSelector())) {
@@ -693,7 +695,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 */
 	private void openFile() {
 		try {
-			model = vocabIo.openFile();
+			model = vocabIo.openFile(model);
 			if (model != null) {
 				clearGUI();
 				updateCategoryLessonList();
@@ -716,7 +718,61 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 
 	@Override
 	public void preferenceChange(PreferenceChangeEvent pce) {
-		// TODO
+		/**
+		 * TODO catch the different properties and update GUI Need to adjust
+		 * height of text fields as size changes.
+		 */
+		String key = pce.getKey();
+		logger.log(Level.INFO, "Pref Change: {0}, value = {1}", new Object[]{key, pce.getNewValue()});
+		Font f;
+
+		if (FieldName.FONT_LIST_SORTMODE.getPrefName().equals(key)) {
+			f = prefs.getFontPref(FieldName.FONT_LIST_SORTMODE);
+			fontMap.put(FieldName.FONT_LIST_SORTMODE, f);
+			vocabEditor.listSelectorCategoryLesson.getList().setFont(f);
+		}
+		// The vocab list
+		else if (FieldName.FONT_LIST_ENGLISH.getPrefName().equals(key)) {
+			f = prefs.getFontPref(FieldName.FONT_LIST_ENGLISH);
+			fontMap.put(FieldName.FONT_LIST_ENGLISH, f);
+			vocabEditor.listSelectorVocabulary.getList().setFont(f);
+		}
+		else if (FieldName.FONT_LIST_ROMAJI.getPrefName().equals(key)) {
+			f = prefs.getFontPref(FieldName.FONT_LIST_ROMAJI);
+			fontMap.put(FieldName.FONT_LIST_ROMAJI, f);
+			vocabEditor.listSelectorVocabulary.getList().setFont(f);
+		}
+		else if (FieldName.FONT_LIST_KANA.getPrefName().equals(key)) {
+			f = prefs.getFontPref(FieldName.FONT_LIST_KANA);
+			fontMap.put(FieldName.FONT_LIST_KANA, f);
+			vocabEditor.listSelectorVocabulary.getList().setFont(f);
+		}
+		else if (FieldName.FONT_LIST_KANJI.getPrefName().equals(key)) {
+			f = prefs.getFontPref(FieldName.FONT_LIST_KANJI);
+			fontMap.put(FieldName.FONT_LIST_KANJI, f);
+			vocabEditor.listSelectorVocabulary.getList().setFont(f);
+		}
+		// The editor fields
+		else if (FieldName.FONT_EDITOR_ENGLISH.getPrefName().equals(key)) {
+			f = prefs.getFontPref(FieldName.FONT_EDITOR_ENGLISH);
+			fontMap.put(FieldName.FONT_EDITOR_ENGLISH, f);
+			vocabEditor.japaneseVocabEditorPanel.jTextFieldEnglish.setFont(f);
+		}
+		else if (FieldName.FONT_EDITOR_ROMAJI.getPrefName().equals(key)) {
+			f = prefs.getFontPref(FieldName.FONT_EDITOR_ROMAJI);
+			fontMap.put(FieldName.FONT_EDITOR_ROMAJI, f);
+			vocabEditor.japaneseVocabEditorPanel.jTextFieldRomaji.setFont(f);
+		}
+		else if (FieldName.FONT_EDITOR_KANA.getPrefName().equals(key)) {
+			f = prefs.getFontPref(FieldName.FONT_EDITOR_KANA);
+			fontMap.put(FieldName.FONT_EDITOR_KANA, f);
+			vocabEditor.japaneseVocabEditorPanel.jTextFieldKana.setFont(f);
+		}
+		else if (FieldName.FONT_EDITOR_KANJI.getPrefName().equals(key)) {
+			f = prefs.getFontPref(FieldName.FONT_EDITOR_KANJI);
+			fontMap.put(FieldName.FONT_EDITOR_KANJI, f);
+			vocabEditor.japaneseVocabEditorPanel.jTextFieldKanji.setFont(f);
+		}
 	}
 
 	@Override
@@ -732,71 +788,123 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 
 		if (pce.getPropertyName().equals("text")) {
 		}
-
-
 		// JapaneseVocabEditorPanel specific properties
-		if (JapaneseVocabEditorPanel.PROP_MODIFIED_ENGLISH.equals(pce.getPropertyName())) {
-			String ov = pce.getOldValue().toString().trim();
-			String nv = pce.getNewValue().toString().trim();
-			boolean renamed = false;
-
-			// Check if trying to use blank value
-			if (nv.isEmpty()) {
-				// Put old value back in
-				vocabEditor.japaneseVocabEditorPanel.setEnglish(ov);
-				setStatusText("English values cannot be blank.", 6000);
-				return;
-			}
-
-			// Check if modifying the category
-			if (ov.startsWith("#")) {
-				// New value must start with #
-				if (!nv.startsWith("#")) {
-					nv = "#" + nv;
-					vocabEditor.japaneseVocabEditorPanel.setEnglish(nv);
-					if (nv.equals(ov)) {
-						JOptionPane.showMessageDialog(null, "Category items must start with #.");
-						return;
-					}
+		switch (pce.getPropertyName()) {
+			case JapaneseVocabEditorPanel.PROP_MODIFIED_ENGLISH:
+				String ov = pce.getOldValue().toString().trim();
+				String nv = pce.getNewValue().toString().trim();
+				boolean renamed = false;
+				// Check if trying to use blank value
+				if (nv.isEmpty()) {
+					// Put old value back in
+					vocabEditor.japaneseVocabEditorPanel.setEnglish(ov);
+					setStatusText("English values cannot be blank.", 6000);
+					return;
 				}
-				// Update category spelling
-				model.renameCategory(ov.replace("#", ""), nv.replace("#", ""));
-				setCurrentCategory(nv.replace("#", ""));
-				updateCategoryLessonList();
-				vocabEditor.listSelectorCategoryLesson.getList().setSelectedValue(getCurrentCategory(), true);
-				renamed = true;
-			}
-			// If making an item into a category label
-			else if (nv.startsWith("#")) {
-				// no adding a new one.
-				JOptionPane.showMessageDialog(null, "Only category items can start with #.");
-				// TODO Remove front # chars
-				// Put the value back to the previous one
-				vocabEditor.japaneseVocabEditorPanel.setEnglish(ov);
-				return;
-			}
-
-			// Make sure they aren't changing to an existing item
-			if (modelVocabulary.contains(nv) && !renamed) {
-				JOptionPane.showMessageDialog(null, "A vocabulary item with that English already exists.");
-				// Put the value back to the previous one
-				vocabEditor.japaneseVocabEditorPanel.setEnglish(ov);
-				return;
-			}
-
-			vocabIo.setFileModified(true);
-
-			if (getCurrentVocabIndex() > -1) {
-				// TODO check what display mode
-				getVocabulary(getCurrentVocabIndex()).setEnglish(nv);
-			}
-			updateVocabularyList(getCurrentCategory()); // send null could assume current
-			vocabEditor.listSelectorVocabulary.getList().setSelectedValue(nv, true);
+				// Check if modifying the category
+				if (ov.startsWith("#")) {
+					// New value must start with #
+					if (!nv.startsWith("#")) {
+						nv = "#" + nv;
+						vocabEditor.japaneseVocabEditorPanel.setEnglish(nv);
+						if (nv.equals(ov)) {
+							JOptionPane.showMessageDialog(null, "Category items must start with #.");
+							return;
+						}
+					}
+					// Update category spelling
+					model.renameCategory(ov.replace("#", ""), nv.replace("#", ""));
+					setCurrentCategory(nv.replace("#", ""));
+					updateCategoryLessonList();
+					vocabEditor.listSelectorCategoryLesson.getList().setSelectedValue(getCurrentCategory(), true);
+					renamed = true;
+				}
+				// If making an item into a category label
+				else if (nv.startsWith("#")) {
+					// no adding a new one.
+					JOptionPane.showMessageDialog(null, "Only category items can start with #.");
+					// TODO Remove front # chars
+					// Put the value back to the previous one
+					vocabEditor.japaneseVocabEditorPanel.setEnglish(ov);
+					return;
+				}
+				// Make sure they aren't changing to an existing item
+				if (modelVocabulary.contains(nv) && !renamed) {
+					JOptionPane.showMessageDialog(null, "A vocabulary item with that English already exists.");
+					// Put the value back to the previous one
+					vocabEditor.japaneseVocabEditorPanel.setEnglish(ov);
+					return;
+				}
+				vocabIo.setFileModified(true);
+				if (getCurrentVocabIndex() > -1) {
+					// TODO check what display mode
+					getVocabulary(getCurrentVocabIndex()).setEnglish(nv);
+				}
+				updateVocabularyList(getCurrentCategory()); // send null could assume current
+				vocabEditor.listSelectorVocabulary.getList().setSelectedValue(nv, true);
+				break;
+			case JapaneseVocabEditorPanel.PROP_MODIFIED_LESSON:
+				// lesson was modified
+				vocabIo.setFileModified(true);
+				break;
+			case VocabModelIO.PROP_FILE_MODIFIED_CHANGED:
+				// Update application title
+				StringBuilder title = new StringBuilder();
+				if ((boolean) pce.getNewValue()) {
+					title.append("*");
+				}
+				if (vocabIo.getFileOpened() != null) {
+					title.append(vocabIo.getFileOpened().getName())
+							.append(" ").append(vocabIo.getFileOpened().getPath());
+				}
+				else if (vocabIo.isFileModified()) {
+					title.append("Untitled");
+				}
+				setApplicationTitle(title.toString());
+				break;
 		}
-		else if (JapaneseVocabEditorPanel.PROP_MODIFIED_LESSON.equals(pce.getPropertyName())) {
-			// lesson was modified
-			vocabIo.setFileModified(true);
+	}
+
+	/**
+	 * Read the user preferences and set fields appropriately.
+	 */
+	private void readPreferences() {
+		Font font;
+		FieldName[] fontPrefs = new FieldName[]{
+			FieldName.FONT_LIST_SORTMODE,
+			FieldName.FONT_LIST_ENGLISH,
+			FieldName.FONT_LIST_ROMAJI,
+			FieldName.FONT_LIST_KANA,
+			FieldName.FONT_LIST_KANJI,
+			FieldName.FONT_EDITOR_ENGLISH,
+			FieldName.FONT_EDITOR_ROMAJI,
+			FieldName.FONT_EDITOR_KANA,
+			FieldName.FONT_EDITOR_KANJI
+		};
+		for (FieldName field : fontPrefs) {
+			font = prefs.getFontPref(field);
+			fontMap.put(field, font);
+			logger.log(Level.INFO, "Pref {2} = {0} {1}", new Object[]{
+				font.getFamily(), font.getSize(), field.name()});
 		}
+		vocabEditor.listSelectorCategoryLesson.getList().setFont(
+				fontMap.get(FieldName.FONT_LIST_SORTMODE));
+
+		// English is the default selection so font will start there
+		vocabEditor.listSelectorVocabulary.getList().setFont(
+				fontMap.get(FieldName.FONT_LIST_ENGLISH));
+
+		// Ensure vocab editor panel fields are appropriately sized
+		vocabEditor.japaneseVocabEditorPanel.jTextFieldEnglish.setFont(
+				fontMap.get(FieldName.FONT_EDITOR_ENGLISH));
+		vocabEditor.japaneseVocabEditorPanel.jTextFieldRomaji.setFont(
+				fontMap.get(FieldName.FONT_EDITOR_ROMAJI));
+		vocabEditor.japaneseVocabEditorPanel.jTextFieldKana.setFont(
+				fontMap.get(FieldName.FONT_EDITOR_KANA));
+		vocabEditor.japaneseVocabEditorPanel.jTextFieldKanji.setFont(
+				fontMap.get(FieldName.FONT_EDITOR_KANJI));
+
+		// TODO set window position and size
 	}
 
 	/**
@@ -844,6 +952,16 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Sets the application title bar string to the app name plus the given
+	 * name.
+	 *
+	 * @param name
+	 */
+	public void setApplicationTitle(String name) {
+		vocabEditor.setTitle(APP_TITLE + " - " + name);
 	}
 
 	/**
@@ -1167,7 +1285,6 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		if (selectedItem != null) {
 			list.setSelectedValue(selectedItem, true);
 		}
-		vocabIo.setFileModified(false);
 		// If resulting update leaves no selected lesson, then disable vocabulary controls.
 		if (list.isSelectionEmpty()) {
 			setVocabControlStates(false);

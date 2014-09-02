@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
+import java.util.prefs.Preferences;
 import javax.swing.DefaultListModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -43,9 +44,11 @@ import psyberchi.app.japanesevocabjsoneditor.model.EditorPreferences.FieldName;
 import psyberchi.app.japanesevocabjsoneditor.model.EnglishComparator;
 import psyberchi.app.japanesevocabjsoneditor.model.VocabItem;
 import psyberchi.app.japanesevocabjsoneditor.model.VocabModel;
+import psyberchi.app.japanesevocabjsoneditor.ui.EditorPrefPanel;
 import psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor;
 import static psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditor.APP_TITLE;
 import psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditorPanel;
+import psyberchi.app.japanesevocabjsoneditor.ui.PreferenceDialog;
 
 /**
  * @author Kendall Conrad
@@ -141,6 +144,10 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		 */
 		FileSaveAs,
 		/**
+		 * Opens the preferences
+		 */
+		Preferences,
+		/**
 		 * Close the currently open file
 		 */
 		FileClose,
@@ -221,7 +228,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 */
 	public JapaneseVocabEditorController(JapaneseVocabEditor editor) {
 		vocabEditor = editor;
-		prefs = new EditorPreferences();
+		prefs = new EditorPreferences(Preferences.userNodeForPackage(EditorPrefPanel.class));
 		prefs.getPrefs().addPreferenceChangeListener(this);
 		vocabIo.addPropertyChangeListener(this);
 	}
@@ -257,6 +264,10 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				break;
 			case FileSaveAs:
 				vocabIo.saveAsFile(model);
+				break;
+			case Preferences:
+				PreferenceDialog dialog = new PreferenceDialog(vocabEditor, true);
+				dialog.setVisible(true);
 				break;
 			case FileClose:
 				closeFile();
@@ -732,6 +743,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 			vocabEditor.listSelectorCategoryLesson.getList().setFont(f);
 		}
 		// The vocab list
+		// TODO only change list font if it is showing right mode
 		else if (FieldName.FONT_LIST_ENGLISH.getPrefName().equals(key)) {
 			f = prefs.getFontPref(FieldName.FONT_LIST_ENGLISH);
 			fontMap.put(FieldName.FONT_LIST_ENGLISH, f);

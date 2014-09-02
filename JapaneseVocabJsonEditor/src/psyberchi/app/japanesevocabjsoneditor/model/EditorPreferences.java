@@ -48,7 +48,7 @@ public class EditorPreferences {
 				case FONT_EDITOR_KANJI:
 					return 22;
 				case FONT_EDITOR_ENGLISH:
-					return 32;
+					return 16;
 				case FONT_LIST_SORTMODE:
 				case FONT_LIST_ENGLISH:
 				case FONT_LIST_ROMAJI:
@@ -79,8 +79,9 @@ public class EditorPreferences {
 
 	private Preferences prefs;
 
-	public EditorPreferences() {
-		prefs = Preferences.userNodeForPackage(getClass());
+	public EditorPreferences(Preferences p) {
+//		prefs = Preferences.userNodeForPackage(getClass());
+		prefs = p;
 	}
 
 	private int getFontSize(FieldName p) {

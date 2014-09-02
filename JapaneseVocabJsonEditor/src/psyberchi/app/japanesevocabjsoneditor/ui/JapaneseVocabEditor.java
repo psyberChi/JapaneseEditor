@@ -9,7 +9,6 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.KeyStroke;
@@ -31,10 +30,6 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
 	 * The level to log at
 	 */
 	public static Level logLevel = Level.INFO;
-	/**
-	 * Preference object.
-	 */
-	private static final Preferences prefs = Preferences.userNodeForPackage(JapaneseVocabEditor.class);
 	/**
 	 * The main title of the application.
 	 */
@@ -84,6 +79,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
 		jMenuItemOpen.addActionListener(controller);
 		jMenuItemSave.addActionListener(controller);
 		jMenuItemSaveAs.addActionListener(controller);
+		jMenuItemPreferences.addActionListener(controller);
 		jMenuItemClose.addActionListener(controller);
 		jMenuItemExit.addActionListener(controller);
 		// JMenuItem Vocabulary action listeners
@@ -153,6 +149,8 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
         jMenuItemSave = new javax.swing.JMenuItem();
         jMenuItemSaveAs = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        jMenuItemPreferences = new javax.swing.JMenuItem();
+        jSeparator3 = new javax.swing.JPopupMenu.Separator();
         jMenuItemClose = new javax.swing.JMenuItem();
         jMenuItemExit = new javax.swing.JMenuItem();
         jMenuVocab = new javax.swing.JMenu();
@@ -263,6 +261,10 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
         jMenuItemSaveAs.setActionCommand(EditorActions.FileSaveAs.name());
         jMenuFile.add(jMenuItemSaveAs);
         jMenuFile.add(jSeparator1);
+
+        jMenuItemPreferences.setText("Preferences");
+        jMenuFile.add(jMenuItemPreferences);
+        jMenuFile.add(jSeparator3);
 
         jMenuItemClose.setText("Close File");
         jMenuItemClose.setActionCommand(EditorActions.FileClose.name());
@@ -380,6 +382,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItemExit;
     private javax.swing.JMenuItem jMenuItemNew;
     private javax.swing.JMenuItem jMenuItemOpen;
+    private javax.swing.JMenuItem jMenuItemPreferences;
     private javax.swing.JMenuItem jMenuItemSave;
     private javax.swing.JMenuItem jMenuItemSaveAs;
     public javax.swing.JMenuItem jMenuItemVocabAdd;
@@ -391,6 +394,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
     public javax.swing.JPopupMenu jPopupMenuCategories;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
+    private javax.swing.JPopupMenu.Separator jSeparator3;
     private javax.swing.JSplitPane jSplitPane;
     public psyberchi.app.japanesevocabjsoneditor.ui.JapaneseVocabEditorPanel japaneseVocabEditorPanel;
     public psyberchi.app.japanesevocabjsoneditor.ui.ListSelector listSelectorCategoryLesson;

@@ -2,15 +2,27 @@
 
 == TODO ==
 
-* Menu items
+Menu items
 ** Recent files?
-* Preferences
-** Create JDailog to show preferences
+
+Preferences
 ** Adjust font sizes for each field, and the list text.
 *** Allow font size preference of vocab list based on display mode?
 ** Where will the preference file be saved to. ~/vocabeditor.prefs
+
+Prefs GUI:
+* Make component for FontItem that will make it easier to get/set font attributes.
+** FontItem(String label, String family, int size)
+** Can make alternative constructors if we want to include 'style'
+*** Then what fields are shown depends on which constructor is used
+* Get a list of available fonts from system to fill combo box.
+** 1) String[] fontNames = Toolkit.getDefaultToolkit().getFontList();
+** 2) GraphicsEnvironment e = GraphicsEnvironment.getLocalGraphicsEnvironment();
+**    Font[] allFonts = e.getAllFonts();
+
 * Log application to file accessible by user as need be.
 * TimedStatusBar: Keep queue of timed msgs
+* Create an About dialog.
 
 === MVC Tasks ===
 

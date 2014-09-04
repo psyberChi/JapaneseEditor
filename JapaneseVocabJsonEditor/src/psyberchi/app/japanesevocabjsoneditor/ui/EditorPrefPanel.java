@@ -2,18 +2,27 @@
  *  EditorPrefPanel.java
  *
  *  GNU GPL License.
+ *
+ * Change Log
+ * Date        Author               Changes
+ * 2014-09-01  Kendall Conrad       Created
  */
 package psyberchi.app.japanesevocabjsoneditor.ui;
 
-import java.awt.Component;
-import java.awt.FlowLayout;
+import java.awt.BorderLayout;
 import java.awt.Font;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JSpinner;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import psyberchi.app.japanesevocabjsoneditor.model.EditorPreferences;
 import psyberchi.app.japanesevocabjsoneditor.model.EditorPreferences.FieldName;
 
@@ -22,9 +31,8 @@ import psyberchi.app.japanesevocabjsoneditor.model.EditorPreferences.FieldName;
  * the list and vocabulary editor panel fields.
  *
  * @author Kendall Conrad
- * @created 2014-09-01
  */
-public final class EditorPrefPanel extends PrefPanel {
+public final class EditorPrefPanel extends PrefPanel implements ChangeListener, ItemListener {
 	/**
 	 * Logger
 	 */
@@ -41,7 +49,11 @@ public final class EditorPrefPanel extends PrefPanel {
 	 * Capture the values of the fields when first loaded to have something to
 	 * compare to when saving.
 	 */
-	private HashMap<Component, Object> oldValues = new HashMap<>();
+	private HashMap<FontItemPanel, Font> oldValues = new HashMap<>();
+	/**
+	 * Keeps a mapping between font item panel and preference name for it
+	 */
+	private HashMap<FontItemPanel, FieldName> fontFieldMap = new HashMap<>();
 
 	/**
 	 * Creates new form EditorPrefPanel
@@ -50,7 +62,7 @@ public final class EditorPrefPanel extends PrefPanel {
 		initComponents();
 		editorPrefs = new EditorPreferences(prefs);
 		loadPreferences();
-		captureOldValues();
+		configure();
 	}
 
 	/**
@@ -58,40 +70,66 @@ public final class EditorPrefPanel extends PrefPanel {
 	 * opens, which will later be used to determine whether or not a preference
 	 * has changed and if it needs saving or not.
 	 */
-	private void captureOldValues() {
-		oldValues.put(jComboBoxListSortMode, jComboBoxListSortMode.getSelectedItem());
-		oldValues.put(jComboBoxListFontNameEnglish, jComboBoxListFontNameEnglish.getSelectedItem());
+	private void configure() {
+		fontFieldMap.put(fontItemPanelListSortMode, FieldName.FONT_LIST_SORTMODE);
+		fontFieldMap.put(fontItemPanelListEnglish, FieldName.FONT_LIST_ENGLISH);
+		fontFieldMap.put(fontItemPanelListRomaji, FieldName.FONT_LIST_ROMAJI);
+		fontFieldMap.put(fontItemPanelListKana, FieldName.FONT_LIST_KANA);
+		fontFieldMap.put(fontItemPanelListKanji, FieldName.FONT_LIST_KANJI);
+		fontFieldMap.put(fontItemPanelEditorEnglish, FieldName.FONT_EDITOR_ENGLISH);
+		fontFieldMap.put(fontItemPanelEditorRomaji, FieldName.FONT_EDITOR_ROMAJI);
+		fontFieldMap.put(fontItemPanelEditorKana, FieldName.FONT_EDITOR_KANA);
+		fontFieldMap.put(fontItemPanelEditorKanji, FieldName.FONT_EDITOR_KANJI);
+
+		// Add listeners an store starting values
+		for (Map.Entry<FontItemPanel, FieldName> p : fontFieldMap.entrySet()) {
+			p.getKey().jComboBoxFontFamily.addItemListener(this);
+			p.getKey().jSpinnerFontSize.addChangeListener(this);
+			oldValues.put(p.getKey(), p.getKey().getFontItem());
+		}
+	}
+
+	@Override
+	public boolean dataIsValid() {
+		// TODO add any necessary validation
+		return true;
 	}
 
 	/**
-	 * Determines if the value of the combo box has changed.
+	 * Determines if the value of the FontItemPanel has changed.
 	 *
-	 * @param c JComboBox to check
+	 * @param c FontItemPanel to check
 	 * @return
 	 */
-	private boolean hasChanged(JComboBox c) {
-		return !oldValues.get(c).equals(c.getSelectedItem());
+	private boolean hasChanged(FontItemPanel c) {
+		return !oldValues.get(c).equals(c.getFontItem());
+	}
+
+	@Override
+	public void itemStateChanged(ItemEvent evt) {
+		if (ItemEvent.SELECTED != evt.getStateChange()) {
+			return;
+		}
+		JComboBox src = (JComboBox) evt.getSource();
+		if (src.getParent() instanceof FontItemPanel) {
+			Font f = ((FontItemPanel) src.getParent()).getFontItem();
+			jLabelFontLook.setFont(f);
+		}
 	}
 
 	@Override
 	public void loadPreferences() {
 		logger.log(Level.INFO, "Loading preferences from Editor prefs");
-		// load list fonts
-		Font f;
 		try {
-			// sort mode
-
-			// list english
-			f = editorPrefs.getFontPref(FieldName.FONT_LIST_ENGLISH);
-			jComboBoxListFontNameEnglish.setSelectedItem(f.getFamily());
-			jComboBoxListFontSizeEnglish.setSelectedItem(String.valueOf(f.getSize()));
-			logger.log(Level.INFO, "EnFont: {0}:{1}", new Object[]{f.getFamily(), f.getSize()});
-			// list romaji
-			f = editorPrefs.getFontPref(FieldName.FONT_LIST_ROMAJI);
-			jComboBoxListRomaji.setSelectedItem(String.valueOf(f.getSize()));
-
-			// load editor fonts
-
+			// load list fonts
+			Font f;
+			for (Map.Entry<FontItemPanel, FieldName> p : fontFieldMap.entrySet()) {
+				f = editorPrefs.getFontPref(p.getValue());
+				p.getKey().setFontItem(f);
+				logger.log(Level.INFO, "{2}: {0}:{1}", new Object[]{
+					f.getFamily(), f.getSize(), p.getValue().getPrefName()
+				});
+			}
 		}
 		catch (Exception ex) {
 			logger.log(Level.INFO, "Exception while loading preferences: {0}", ex.getLocalizedMessage());
@@ -102,45 +140,43 @@ public final class EditorPrefPanel extends PrefPanel {
 	public void savePreferences() {
 		logger.log(Level.INFO, "Saving Editor prefs");
 
-		Font f;
-		String fn;
-		String sz;
-
-		// TODO can we detect what changed so only saving new stuff?
-
-		// Change list english if either its font name or size has changed
-		if (hasChanged(jComboBoxListFontNameEnglish)
-				|| hasChanged(jComboBoxListFontSizeEnglish)) {
-
-			fn = jComboBoxListFontNameEnglish.getSelectedItem().toString();
-			sz = jComboBoxListFontSizeEnglish.getSelectedItem().toString();
-			f = new Font(fn, Font.PLAIN, Integer.valueOf(sz));
-			editorPrefs.saveFontPref(FieldName.FONT_LIST_ENGLISH, f);
-			logger.log(Level.INFO, "EnFont: {0}:{1}", new Object[]{f.getFamily(), f.getSize()});
-		}
-		if (hasChanged(jComboBoxListRomaji)) {
-			sz = jComboBoxListRomaji.getSelectedItem().toString();
-			f = new Font("dialog", Font.PLAIN, Integer.valueOf(sz));
-			editorPrefs.saveFontPref(FieldName.FONT_LIST_ROMAJI, f);
+		for (Map.Entry<FontItemPanel, FieldName> p : fontFieldMap.entrySet()) {
+			// Only care about items that have actually been motified
+			if (hasChanged(p.getKey())) {
+				editorPrefs.saveFontPref(p.getValue(), p.getKey().getFontItem());
+				logger.log(Level.INFO, "{2}: {0}:{1}", new Object[]{
+					p.getKey().getFontItem().getFamily(),
+					p.getKey().getFontItem().getSize(),
+					p.getValue().getPrefName()
+				});
+			}
 		}
 	}
 
 	@Override
-	public boolean dataIsValid() {
-		//
-		return true;
+	public void stateChanged(ChangeEvent e) {
+		JSpinner spinner = (JSpinner) e.getSource();
+		if (spinner.getParent() instanceof FontItemPanel) {
+			Font f = ((FontItemPanel) spinner.getParent()).getFontItem();
+			jLabelFontLook.setFont(f);
+		}
 	}
 
+	/**
+	 * A testing main.
+	 *
+	 * @param a
+	 */
 	public static void main(String[] a) {
 		JFrame dialog = new JFrame();
-		FlowLayout layout = new FlowLayout();
+		BorderLayout layout = new BorderLayout();
 		dialog.setLayout(layout);
 		dialog.setSize(400, 400);
 
 		EditorPrefPanel panel = new EditorPrefPanel();
 		panel.setSize(300, 300);
 
-		dialog.add(panel);
+		dialog.add(panel, BorderLayout.CENTER);
 
 		dialog.pack();
 		dialog.setVisible(true);
@@ -158,35 +194,18 @@ public final class EditorPrefPanel extends PrefPanel {
         jScrollPane = new javax.swing.JScrollPane();
         jPanelMain = new javax.swing.JPanel();
         jPanelListFonts = new javax.swing.JPanel();
-        jPanelListSortMode = new javax.swing.JPanel();
-        jLabelListSortMode = new javax.swing.JLabel();
-        jComboBoxListSortMode = new javax.swing.JComboBox();
-        jPanelListEnglish = new javax.swing.JPanel();
-        jLabelListEnglish = new javax.swing.JLabel();
-        jComboBoxListFontNameEnglish = new javax.swing.JComboBox();
-        jComboBoxListFontSizeEnglish = new javax.swing.JComboBox();
-        jPanelListListRomaji = new javax.swing.JPanel();
-        jLabelListRomaji = new javax.swing.JLabel();
-        jComboBoxListRomaji = new javax.swing.JComboBox();
-        jPanelListKana = new javax.swing.JPanel();
-        jLabelListKana = new javax.swing.JLabel();
-        jComboBoxListKana = new javax.swing.JComboBox();
-        jPanelListKanji = new javax.swing.JPanel();
-        jLabelListKanji = new javax.swing.JLabel();
-        jComboBoxListKanji = new javax.swing.JComboBox();
+        fontItemPanelListSortMode = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
+        fontItemPanelListEnglish = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
+        fontItemPanelListRomaji = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
+        fontItemPanelListKana = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
+        fontItemPanelListKanji = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
         jPanelEditorFonts = new javax.swing.JPanel();
-        jPanelEditorEnglish = new javax.swing.JPanel();
-        jLabelEditorEnglish = new javax.swing.JLabel();
-        jComboBoxEditorEnglish = new javax.swing.JComboBox();
-        jPanelEditorRomaji = new javax.swing.JPanel();
-        jLabelEditorRomaji = new javax.swing.JLabel();
-        jComboBoxEditorRomaji = new javax.swing.JComboBox();
-        jPanelEditorKana = new javax.swing.JPanel();
-        jLabelEditorKana = new javax.swing.JLabel();
-        jComboBoxEditorKana = new javax.swing.JComboBox();
-        jPanelEditorKanji = new javax.swing.JPanel();
-        jLabelEditorKanji = new javax.swing.JLabel();
-        jComboBoxEditorKanji = new javax.swing.JComboBox();
+        fontItemPanelEditorEnglish = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
+        fontItemPanelEditorRomaji = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
+        fontItemPanelEditorKana = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
+        fontItemPanelEditorKanji = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
+        jPanelFontLook = new javax.swing.JPanel();
+        jLabelFontLook = new javax.swing.JLabel();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -195,159 +214,69 @@ public final class EditorPrefPanel extends PrefPanel {
         jPanelListFonts.setBorder(javax.swing.BorderFactory.createTitledBorder("List Fonts"));
         jPanelListFonts.setLayout(new javax.swing.BoxLayout(jPanelListFonts, javax.swing.BoxLayout.PAGE_AXIS));
 
-        jPanelListSortMode.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
+        fontItemPanelListSortMode.setFontLabel("Sort Mode:");
+        jPanelListFonts.add(fontItemPanelListSortMode);
 
-        jLabelListSortMode.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelListSortMode.setText("Sort Mode:");
-        jLabelListSortMode.setPreferredSize(new java.awt.Dimension(120, 16));
-        jPanelListSortMode.add(jLabelListSortMode);
+        fontItemPanelListEnglish.setFontLabel("English:");
+        jPanelListFonts.add(fontItemPanelListEnglish);
 
-        jComboBoxListSortMode.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36" }));
-        jPanelListSortMode.add(jComboBoxListSortMode);
+        fontItemPanelListRomaji.setFontLabel("Romaji:");
+        jPanelListFonts.add(fontItemPanelListRomaji);
 
-        jPanelListFonts.add(jPanelListSortMode);
+        fontItemPanelListKana.setFontLabel("Kana:");
+        jPanelListFonts.add(fontItemPanelListKana);
 
-        jPanelListEnglish.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
-
-        jLabelListEnglish.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelListEnglish.setText("English:");
-        jLabelListEnglish.setPreferredSize(new java.awt.Dimension(120, 16));
-        jPanelListEnglish.add(jLabelListEnglish);
-
-        jComboBoxListFontNameEnglish.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "dialog", "Verdana" }));
-        jPanelListEnglish.add(jComboBoxListFontNameEnglish);
-
-        jComboBoxListFontSizeEnglish.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36" }));
-        jPanelListEnglish.add(jComboBoxListFontSizeEnglish);
-
-        jPanelListFonts.add(jPanelListEnglish);
-
-        jPanelListListRomaji.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
-
-        jLabelListRomaji.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelListRomaji.setText("Romaji:");
-        jLabelListRomaji.setPreferredSize(new java.awt.Dimension(120, 16));
-        jPanelListListRomaji.add(jLabelListRomaji);
-
-        jComboBoxListRomaji.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36" }));
-        jPanelListListRomaji.add(jComboBoxListRomaji);
-
-        jPanelListFonts.add(jPanelListListRomaji);
-
-        jPanelListKana.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
-
-        jLabelListKana.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelListKana.setText("Kana:");
-        jLabelListKana.setPreferredSize(new java.awt.Dimension(120, 16));
-        jPanelListKana.add(jLabelListKana);
-
-        jComboBoxListKana.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36" }));
-        jPanelListKana.add(jComboBoxListKana);
-
-        jPanelListFonts.add(jPanelListKana);
-
-        jPanelListKanji.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
-
-        jLabelListKanji.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelListKanji.setText("Kanji:");
-        jLabelListKanji.setPreferredSize(new java.awt.Dimension(120, 16));
-        jPanelListKanji.add(jLabelListKanji);
-
-        jComboBoxListKanji.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36" }));
-        jPanelListKanji.add(jComboBoxListKanji);
-
-        jPanelListFonts.add(jPanelListKanji);
+        fontItemPanelListKanji.setFontLabel("Kanji:");
+        jPanelListFonts.add(fontItemPanelListKanji);
 
         jPanelMain.add(jPanelListFonts);
 
         jPanelEditorFonts.setBorder(javax.swing.BorderFactory.createTitledBorder("Vocab Editor Fonts"));
         jPanelEditorFonts.setLayout(new javax.swing.BoxLayout(jPanelEditorFonts, javax.swing.BoxLayout.PAGE_AXIS));
 
-        jPanelEditorEnglish.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
+        fontItemPanelEditorEnglish.setFontLabel("English:");
+        jPanelEditorFonts.add(fontItemPanelEditorEnglish);
 
-        jLabelEditorEnglish.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelEditorEnglish.setText("English:");
-        jLabelEditorEnglish.setPreferredSize(new java.awt.Dimension(120, 16));
-        jPanelEditorEnglish.add(jLabelEditorEnglish);
+        fontItemPanelEditorRomaji.setFontLabel("Romaji:");
+        jPanelEditorFonts.add(fontItemPanelEditorRomaji);
 
-        jComboBoxEditorEnglish.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36" }));
-        jPanelEditorEnglish.add(jComboBoxEditorEnglish);
+        fontItemPanelEditorKana.setFontLabel("Kana:");
+        jPanelEditorFonts.add(fontItemPanelEditorKana);
 
-        jPanelEditorFonts.add(jPanelEditorEnglish);
-
-        jPanelEditorRomaji.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
-
-        jLabelEditorRomaji.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelEditorRomaji.setText("Romaji:");
-        jLabelEditorRomaji.setPreferredSize(new java.awt.Dimension(120, 16));
-        jPanelEditorRomaji.add(jLabelEditorRomaji);
-
-        jComboBoxEditorRomaji.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36" }));
-        jPanelEditorRomaji.add(jComboBoxEditorRomaji);
-
-        jPanelEditorFonts.add(jPanelEditorRomaji);
-
-        jPanelEditorKana.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
-
-        jLabelEditorKana.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelEditorKana.setText("Kana:");
-        jLabelEditorKana.setPreferredSize(new java.awt.Dimension(120, 16));
-        jPanelEditorKana.add(jLabelEditorKana);
-
-        jComboBoxEditorKana.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36" }));
-        jPanelEditorKana.add(jComboBoxEditorKana);
-
-        jPanelEditorFonts.add(jPanelEditorKana);
-
-        jPanelEditorKanji.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 5, 0));
-
-        jLabelEditorKanji.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabelEditorKanji.setText("Kanji:");
-        jLabelEditorKanji.setPreferredSize(new java.awt.Dimension(120, 16));
-        jPanelEditorKanji.add(jLabelEditorKanji);
-
-        jComboBoxEditorKanji.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30", "32", "34", "36" }));
-        jPanelEditorKanji.add(jComboBoxEditorKanji);
-
-        jPanelEditorFonts.add(jPanelEditorKanji);
+        fontItemPanelEditorKanji.setFontLabel("Kanji:");
+        jPanelEditorFonts.add(fontItemPanelEditorKanji);
 
         jPanelMain.add(jPanelEditorFonts);
 
         jScrollPane.setViewportView(jPanelMain);
 
-        add(jScrollPane, java.awt.BorderLayout.NORTH);
+        add(jScrollPane, java.awt.BorderLayout.CENTER);
+
+        jPanelFontLook.setLayout(new java.awt.BorderLayout());
+
+        jLabelFontLook.setFont(new java.awt.Font("Serif", 0, 16)); // NOI18N
+        jLabelFontLook.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabelFontLook.setText("English 日本語 ひらがな");
+        jLabelFontLook.setMinimumSize(new java.awt.Dimension(168, 30));
+        jLabelFontLook.setPreferredSize(new java.awt.Dimension(168, 50));
+        jPanelFontLook.add(jLabelFontLook, java.awt.BorderLayout.CENTER);
+
+        add(jPanelFontLook, java.awt.BorderLayout.SOUTH);
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox jComboBoxEditorEnglish;
-    private javax.swing.JComboBox jComboBoxEditorKana;
-    private javax.swing.JComboBox jComboBoxEditorKanji;
-    private javax.swing.JComboBox jComboBoxEditorRomaji;
-    private javax.swing.JComboBox jComboBoxListFontNameEnglish;
-    private javax.swing.JComboBox jComboBoxListFontSizeEnglish;
-    private javax.swing.JComboBox jComboBoxListKana;
-    private javax.swing.JComboBox jComboBoxListKanji;
-    private javax.swing.JComboBox jComboBoxListRomaji;
-    private javax.swing.JComboBox jComboBoxListSortMode;
-    private javax.swing.JLabel jLabelEditorEnglish;
-    private javax.swing.JLabel jLabelEditorKana;
-    private javax.swing.JLabel jLabelEditorKanji;
-    private javax.swing.JLabel jLabelEditorRomaji;
-    private javax.swing.JLabel jLabelListEnglish;
-    private javax.swing.JLabel jLabelListKana;
-    private javax.swing.JLabel jLabelListKanji;
-    private javax.swing.JLabel jLabelListRomaji;
-    private javax.swing.JLabel jLabelListSortMode;
-    private javax.swing.JPanel jPanelEditorEnglish;
+    private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelEditorEnglish;
+    private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelEditorKana;
+    private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelEditorKanji;
+    private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelEditorRomaji;
+    private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelListEnglish;
+    private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelListKana;
+    private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelListKanji;
+    private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelListRomaji;
+    private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelListSortMode;
+    private javax.swing.JLabel jLabelFontLook;
     private javax.swing.JPanel jPanelEditorFonts;
-    private javax.swing.JPanel jPanelEditorKana;
-    private javax.swing.JPanel jPanelEditorKanji;
-    private javax.swing.JPanel jPanelEditorRomaji;
-    private javax.swing.JPanel jPanelListEnglish;
+    private javax.swing.JPanel jPanelFontLook;
     private javax.swing.JPanel jPanelListFonts;
-    private javax.swing.JPanel jPanelListKana;
-    private javax.swing.JPanel jPanelListKanji;
-    private javax.swing.JPanel jPanelListListRomaji;
-    private javax.swing.JPanel jPanelListSortMode;
     private javax.swing.JPanel jPanelMain;
     private javax.swing.JScrollPane jScrollPane;
     // End of variables declaration//GEN-END:variables

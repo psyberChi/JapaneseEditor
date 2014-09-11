@@ -136,6 +136,10 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		 */
 		FileOpen,
 		/**
+		 * Opens a recent file
+		 */
+		FileRecent,
+		/**
 		 * Save open file
 		 */
 		FileSave,
@@ -258,6 +262,30 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				break;
 			case FileOpen:
 				openFile();
+				break;
+			case FileRecent:
+				// Open the recent file clicked on
+				// TODO Move to new method
+				Object obj = ae.getSource();
+				if (!(obj instanceof JMenuItem)) {
+					return;
+				}
+				// Check if file exist and is readable
+				JMenuItem menuItem = (JMenuItem) ae.getSource();
+				File recentFile = new File(menuItem.getText);
+				if (!file.exists()) {
+					// notify user of bad recent file
+				}
+				if (!file.canRead()) {
+					// notify user
+				}
+				if (!file.canWrite()) {
+					// notify user it's read-only
+				}
+				// Open and try to load file
+				if (!vocabIo.openFile(recentFile, model)) {
+					// TODO notify user of fail?
+				}
 				break;
 			case FileSave:
 				vocabIo.saveFile(model);
@@ -916,7 +944,21 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		vocabEditor.japaneseVocabEditorPanel.jTextFieldKanji.setFont(
 				fontMap.get(FieldName.FONT_EDITOR_KANJI));
 
-		// TODO set window position and size
+		// TODO set window position and size. Test
+		vocabEditor.setSize(prefs.getWindowSize());
+		vocabEditor.setLocation(prefs.getWindowPosition());
+
+		// TODO get recent files and add to file menu
+		ArrayList<String> filePaths = prefs.getRecentFiles();
+		JMenu recentMenu = new JMenu();
+		for (String path : filePaths) {
+			JMenuItem item = new JMenuItem(path);
+			// Add action listener
+			item.addActionListener(this);
+			item.setActionCommand("RECENT_FILE");// TODO
+			recentMenu.add(item);
+		}
+//		vocabEditor.jMenuItemRecent.add(recentMenu);
 	}
 
 	/**

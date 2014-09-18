@@ -1,7 +1,7 @@
 /*
- *  EditorPrefPanel.java
+ * EditorPrefPanel.java
  *
- *  GNU GPL License.
+ * GNU GPL License.
  *
  * Change Log
  * Date        Author               Changes

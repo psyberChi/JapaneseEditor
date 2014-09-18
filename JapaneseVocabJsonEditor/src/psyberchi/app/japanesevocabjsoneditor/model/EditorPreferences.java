@@ -12,6 +12,7 @@ package psyberchi.app.japanesevocabjsoneditor.model;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
@@ -148,7 +149,7 @@ public class EditorPreferences {
 		for (int x = 0; x < num; x++) {
 			path = prefs.get(FieldName.RECENT_ITEM_.getPrefName() + x, null);
 			if (path != null) {
-				if (!recentFiles.contains(path) {
+				if (!recentFiles.contains(path)) {
 					recentFiles.add(path);
 				}
 			}
@@ -184,7 +185,7 @@ public class EditorPreferences {
 		String strDim = prefs.get(FieldName.WINDOW_SIZE.getPrefName(), "300,340");
 		String[] dims = strDim.split(",");
 		try {
-			return new Dimension(dims[0], dims[1]);
+			return new Dimension(Integer.valueOf(dims[0]), Integer.valueOf(dims[1]));
 		}
 		catch (Exception ex) {
 			return new Dimension(300, 340);
@@ -221,13 +222,13 @@ public class EditorPreferences {
 			prefs.put(prefix + x, files.get(x).getAbsolutePath());
 		}
 		// Save number of files
-		prefs.put(FieldName.RECENT_ITEMS_NUM.getPrefName(), numFiles);
+		prefs.putInt(FieldName.RECENT_ITEMS_NUM.getPrefName(), numFiles);
 	}
 
 	/**
 	 * Saves away a point to represent the window position.
 	 *
-	 * @param pt the upperleft position of the window.
+	 * @param pt the upper-left position of the window.
 	 */
 	public void saveWindowPosition(Point pt) {
 		// Interpret null value as wanting to remove it

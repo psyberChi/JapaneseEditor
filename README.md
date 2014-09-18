@@ -16,6 +16,8 @@ Each vocabulary entry has five components:
 
 Only the English entry is required. Not all words have a Kanji equivalent to enter in. The lesson is just a numerical value and is optional. It can be helpful if you're working through a book and want to capture what chapter or lesson it came from.
 
+TODO ![ScreenShot](screenshot.jpg)
+
 ## Preferences
 
 The current preferences allow you to:

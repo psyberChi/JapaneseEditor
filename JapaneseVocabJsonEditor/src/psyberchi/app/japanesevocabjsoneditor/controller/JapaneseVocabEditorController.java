@@ -16,6 +16,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -264,28 +265,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				openFile();
 				break;
 			case FileRecent:
-				// Open the recent file clicked on
-				// TODO Move to new method
-				Object obj = ae.getSource();
-				if (!(obj instanceof JMenuItem)) {
-					return;
-				}
-				// Check if file exist and is readable
-				JMenuItem menuItem = (JMenuItem) ae.getSource();
-				File recentFile = new File(menuItem.getText);
-				if (!file.exists()) {
-					// notify user of bad recent file
-				}
-				if (!file.canRead()) {
-					// notify user
-				}
-				if (!file.canWrite()) {
-					// notify user it's read-only
-				}
-				// Open and try to load file
-				if (!vocabIo.openFile(recentFile, model)) {
-					// TODO notify user of fail?
-				}
+				openRecentFile(ae);
 				break;
 			case FileSave:
 				vocabIo.saveFile(model);
@@ -753,6 +733,48 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		catch (Exception ex) {
 			setStatusText(ex.getLocalizedMessage(), 3000);
 		}
+	}
+
+	/**
+	 * Opens a recent file based on an ActionEvent that originates from a
+	 * JMenuItem component, which will have the file path.
+	 *
+	 * @param ae
+	 * @return
+	 */
+	private boolean openRecentFile(ActionEvent ae) {
+		// Open the recent file clicked on
+		Object obj = ae.getSource();
+		if (!(obj instanceof JMenuItem)) {
+			return false;
+		}
+		// Check if file exist and is readable
+		JMenuItem menuItem = (JMenuItem) ae.getSource();
+		File recentFile = new File(menuItem.getText());
+		if (!recentFile.exists()) {
+			// notify user of bad recent file
+		}
+		if (!recentFile.canRead()) {
+			// notify user
+		}
+		if (!recentFile.canWrite()) {
+			// notify user it's read-only
+		}
+		// Open and try to load file
+		try {
+			model = vocabIo.openFile(recentFile, model);
+			if (model == null) {
+				// Something went wrong
+				logger.log(Level.INFO, "Opening recent file gave a null VocabModel");
+				return false;
+			}
+		}
+		catch (Exception ex) {
+			logger.log(Level.SEVERE, "Problem while opening recent file {0}: {1}",
+					new Object[]{recentFile, ex.getLocalizedMessage()});
+			return false;
+		}
+		return true;
 	}
 
 	@Override

@@ -5,9 +5,9 @@
  */
 package psyberchi.app.japanesevocabjsoneditor.controller;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -36,6 +36,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -281,8 +282,16 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				closeFile();
 				break;
 			case Exit:
+				savePreferences();
 				if (vocabIo.closeFile(model)) {
-					vocabEditor.dispose();
+					logger.log(Level.INFO, "Exiting program");
+					SwingUtilities.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							vocabEditor.dispose();
+							System.exit(0);
+						}
+					});
 				}
 				break;
 			case CatAdd:
@@ -715,20 +724,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	private void openFile() {
 		try {
 			model = vocabIo.openFile(model);
-			if (model != null) {
-				clearGUI();
-				updateCategoryLessonList();
-				vocabEditor.listSelectorCategoryLesson.getSelector().setEnabled(true);
-				valueChanged(new ListSelectionEvent(vocabEditor.listSelectorVocabulary.getList(), 0, 0, false));
-				vocabEditor.setTitle(APP_TITLE + " - " + vocabIo.getFileOpened().getAbsolutePath());
-				String status = String.format(
-						"Opened %d categories and %d vocabulary from %s",
-						model.getCategoryCount(),
-						model.getVocabCount(),
-						vocabIo.getFileOpened().getName());
-				setStatusText(status, 5000);
-
-			}
+			openFilePost();
 		}
 		catch (Exception ex) {
 			setStatusText(ex.getLocalizedMessage(), 3000);
@@ -736,11 +732,30 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	}
 
 	/**
+	 * Runs the necessary steps after a new file has been opened.
+	 */
+	private void openFilePost() {
+		if (model != null) {
+			clearGUI();
+			updateCategoryLessonList();
+			vocabEditor.listSelectorCategoryLesson.getSelector().setEnabled(true);
+			valueChanged(new ListSelectionEvent(vocabEditor.listSelectorVocabulary.getList(), 0, 0, false));
+			vocabEditor.setTitle(APP_TITLE + " - " + vocabIo.getFileOpened().getAbsolutePath());
+			String status = String.format(
+					"Opened %d categories and %d vocabulary from %s",
+					model.getCategoryCount(),
+					model.getVocabCount(),
+					vocabIo.getFileOpened().getName());
+			setStatusText(status, 5000);
+		}
+	}
+
+	/**
 	 * Opens a recent file based on an ActionEvent that originates from a
 	 * JMenuItem component, which will have the file path.
 	 *
-	 * @param ae
-	 * @return
+	 * @param ae the ActionEvent that triggered the open action
+	 * @return true if opened the recent file, false otherwise
 	 */
 	private boolean openRecentFile(ActionEvent ae) {
 		// Open the recent file clicked on
@@ -753,12 +768,36 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		File recentFile = new File(menuItem.getText());
 		if (!recentFile.exists()) {
 			// notify user of bad recent file
+			logger.log(Level.WARNING, "Recent file does not exist: ''{0}''",
+					recentFile.getAbsolutePath());
+			JOptionPane.showMessageDialog(vocabEditor,
+					"The file does not appear to exist",
+					"File does not exist",
+					JOptionPane.ERROR_MESSAGE);
+			return false;
 		}
 		if (!recentFile.canRead()) {
-			// notify user
+			// notify user it cannot be opened due to read permission
+			logger.log(Level.WARNING, "Recent file missing read attribute: ''{0}''",
+					recentFile.getAbsolutePath());
+			JOptionPane.showMessageDialog(vocabEditor,
+					"The file is missing read permissions",
+					"Cannot read file",
+					JOptionPane.ERROR_MESSAGE);
 		}
 		if (!recentFile.canWrite()) {
 			// notify user it's read-only
+			logger.log(Level.WARNING, "Recent file cannot be written to: ''{0}''",
+					recentFile.getAbsolutePath());
+			int resp = JOptionPane.showConfirmDialog(vocabEditor,
+					"The file is read-only. You will not be able to save.",
+					"Read-only file",
+					JOptionPane.INFORMATION_MESSAGE);
+			// If they answer no, bail. Don't try to open file
+			if (JOptionPane.NO_OPTION == resp) {
+				logger.log(Level.INFO, "User opted to not open read-only file");
+				return false;
+			}
 		}
 		// Open and try to load file
 		try {
@@ -768,10 +807,12 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				logger.log(Level.INFO, "Opening recent file gave a null VocabModel");
 				return false;
 			}
+			openFilePost();
+			logger.log(Level.INFO, "Opened recent file");
 		}
 		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Problem while opening recent file {0}: {1}",
-					new Object[]{recentFile, ex.getLocalizedMessage()});
+					new Object[]{recentFile.getAbsolutePath(), ex.getLocalizedMessage()});
 			return false;
 		}
 		return true;
@@ -839,7 +880,6 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 
 	@Override
 	public void propertyChange(PropertyChangeEvent pce) {
-		// TODO
 
 		// Listen for JapaneseEditorPanel items
 //		logger.log(Level.INFO, "PropChange: {0} = {1} / {2}", new Object[]{
@@ -848,8 +888,6 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 //			pce.getNewValue()
 //		});
 
-		if (pce.getPropertyName().equals("text")) {
-		}
 		// JapaneseVocabEditorPanel specific properties
 		switch (pce.getPropertyName()) {
 			case JapaneseVocabEditorPanel.PROP_MODIFIED_ENGLISH:
@@ -909,6 +947,13 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				// lesson was modified
 				vocabIo.setFileModified(true);
 				break;
+			case VocabModelIO.PROP_FILE_CHANGED:
+				// Add file to recent file list
+				if (pce.getNewValue() != null && pce.getNewValue() instanceof File) {
+					prefs.addRecentFile(((File) pce.getNewValue()).getAbsolutePath());
+					updateRecentFileMenu();
+				}
+				break;
 			case VocabModelIO.PROP_FILE_MODIFIED_CHANGED:
 				// Update application title
 				StringBuilder title = new StringBuilder();
@@ -931,6 +976,7 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 * Read the user preferences and set fields appropriately.
 	 */
 	private void readPreferences() {
+		logger.log(Level.INFO, "Reading in preferences");
 		Font font;
 		FieldName[] fontPrefs = new FieldName[]{
 			FieldName.FONT_LIST_SORTMODE,
@@ -967,20 +1013,15 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 				fontMap.get(FieldName.FONT_EDITOR_KANJI));
 
 		// TODO set window position and size. Test
-		vocabEditor.setSize(prefs.getWindowSize());
-		vocabEditor.setLocation(prefs.getWindowPosition());
+		Dimension winSize = prefs.getWindowSize();
+		logger.log(Level.INFO, "Window Size: {0}, {1}", new Object[]{winSize.width, winSize.height});
+		vocabEditor.setPreferredSize(winSize);
+		vocabEditor.setSize(winSize);
+		Point winPos = prefs.getWindowPosition();
+		logger.log(Level.INFO, "Window Position: {0}, {1}", new Object[]{winPos.x, winPos.y});
+		vocabEditor.setLocation(winPos);
 
-		// TODO get recent files and add to file menu
-		ArrayList<String> filePaths = prefs.getRecentFiles();
-		JMenu recentMenu = new JMenu();
-		for (String path : filePaths) {
-			JMenuItem item = new JMenuItem(path);
-			// Add action listener
-			item.addActionListener(this);
-			item.setActionCommand("RECENT_FILE");// TODO
-			recentMenu.add(item);
-		}
-//		vocabEditor.jMenuItemRecent.add(recentMenu);
+		updateRecentFileMenu();
 	}
 
 	/**
@@ -1028,6 +1069,16 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Saves current preferences
+	 */
+	private void savePreferences() {
+		logger.log(Level.INFO, "Saving preferences");
+		// Save window size and position
+		prefs.saveWindowPosition(vocabEditor.getLocationOnScreen());
+		prefs.saveWindowSize(vocabEditor.getSize());
 	}
 
 	/**
@@ -1247,6 +1298,22 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 		}
 		if (selectedItem != null && SortMode.Lessons == pick) {
 			vocabEditor.listSelectorCategoryLesson.getList().setSelectedValue(selectedItem, true);
+		}
+	}
+
+	/**
+	 * Updates the recent file menu with the known recent files.
+	 */
+	private void updateRecentFileMenu() {
+		ArrayList<String> filePaths = prefs.getRecentFiles();
+		// Clear menu to ensure we won't have duplicates
+		vocabEditor.jMenuRecentFiles.removeAll();
+		for (String path : filePaths) {
+			JMenuItem item = new JMenuItem(path);
+			// Add action listener
+			item.addActionListener(this);
+			item.setActionCommand(EditorActions.FileRecent.toString());
+			vocabEditor.jMenuRecentFiles.add(item);
 		}
 	}
 

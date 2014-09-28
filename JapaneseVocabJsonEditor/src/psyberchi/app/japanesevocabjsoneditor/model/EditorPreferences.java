@@ -12,21 +12,23 @@ package psyberchi.app.japanesevocabjsoneditor.model;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
-import java.io.File;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 /**
- * A partial preference handler for the Japanese Editor application
- * that handles some of the interface to the preference file.
+ * A partial preference handler for the Japanese Editor application that handles
+ * some of the interface to the preference file.
  *
  * @author Kendall Conrad
  */
 public class EditorPreferences {
-	private ArrayList<String> recentFiles;
-	private Point windowLocation;
-	private Dimension windowSize;
-	private int maxRecent = 5;
+	/**
+	 * Logger
+	 */
+	private static final Logger logger = Logger.getLogger(EditorPreferences.class.getCanonicalName());
+	private ArrayList<String> recentFiles = new ArrayList<>();
 
 	public static enum FieldName {
 		FONT_LIST_SORTMODE,
@@ -42,7 +44,8 @@ public class EditorPreferences {
 		RECENT_ITEMS_NUM,
 		RECENT_ITEM_,
 		WINDOW_POSITION,
-		WINDOW_SIZE;
+		WINDOW_SIZE,
+		WINDOW_SEPARATOR_POS;
 
 		/**
 		 * Returns the preference name to be used for the field.
@@ -54,8 +57,8 @@ public class EditorPreferences {
 		}
 
 		/**
-		 * Gets the default font size for a given field. It should
-		 * only be used for fields that begin with "FONT" as the name.
+		 * Gets the default font size for a given field. It should only be used
+		 * for fields that begin with "FONT" as the name.
 		 */
 		public static int getDefaultFontSize(FieldName f) {
 			switch (f) {
@@ -78,8 +81,8 @@ public class EditorPreferences {
 		}
 
 		/**
-		 * Gets the default font name for a given field. It should
-		 * only be used for fields that begin with "FONT" as the name.
+		 * Gets the default font name for a given field. It should only be used
+		 * for fields that begin with "FONT" as the name.
 		 */
 		public static String getDefaultFontName(FieldName f) {
 			switch (f) {
@@ -102,18 +105,55 @@ public class EditorPreferences {
 	private Preferences prefs;
 
 	public EditorPreferences(Preferences p) {
-//		prefs = Preferences.userNodeForPackage(getClass());
 		prefs = p;
 	}
 
+	/**
+	 * Adds a file to the recent list of files.
+	 *
+	 * @param path the file path
+	 * @return true if the file was added to the list, false otherwise
+	 */
+	public boolean addRecentFile(String path) {
+		if (path == null) {
+			return false;
+		}
+		// If it is already in the list remove it first so it can be added to the
+		// start of the list to make it more recent
+		if (recentFiles.contains(path)) {
+			recentFiles.remove(path);
+		}
+		recentFiles.add(0, path);
+		saveRecentFiles();
+		return true;
+	}
+
+	/**
+	 * Retrieves the font size for a given FieldName.
+	 *
+	 * @param p the field of the font size to retrieve
+	 * @return
+	 */
 	private int getFontSize(FieldName p) {
 		return prefs.getInt(p.getPrefName(), FieldName.getDefaultFontSize(p));
 	}
 
+	/**
+	 * Retrieves the font name for a given FieldName.
+	 *
+	 * @param p the field of the font name to retrieve
+	 * @return
+	 */
 	private String getFontName(FieldName p) {
 		return prefs.get(p.getPrefName(), FieldName.getDefaultFontName(p));
 	}
 
+	/**
+	 * Retrieves the font for a given FieldName.
+	 *
+	 * @param p the field of the font to retrieve
+	 * @return
+	 */
 	public Font getFontPref(FieldName p) {
 		String defaultName = getFontName(p);
 		int defaultSize = getFontSize(p);
@@ -127,7 +167,7 @@ public class EditorPreferences {
 	 * Gets the maximum number of recent files to remember.
 	 */
 	public int getMaxNumberRecentFiles() {
-		int max = prefs.getInt(FieldName.RECENT_MAX.getPrefName(), 10);
+		int max = prefs.getInt(FieldName.RECENT_MAX.getPrefName(), 6);
 		return max;
 	}
 
@@ -181,14 +221,17 @@ public class EditorPreferences {
 	 * Gets the window size from the preferences.
 	 */
 	public Dimension getWindowSize() {
-		Dimension dim = null;
-		String strDim = prefs.get(FieldName.WINDOW_SIZE.getPrefName(), "300,340");
+		String strDim = prefs.get(FieldName.WINDOW_SIZE.getPrefName(), "480,380");
 		String[] dims = strDim.split(",");
 		try {
-			return new Dimension(Integer.valueOf(dims[0]), Integer.valueOf(dims[1]));
+			Dimension dim = new Dimension(
+					Double.valueOf(dims[0]).intValue(),
+					Double.valueOf(dims[1]).intValue());
+			return dim;
 		}
 		catch (Exception ex) {
-			return new Dimension(300, 340);
+			logger.log(Level.SEVERE, "Could not read window size: {0}", ex.getLocalizedMessage());
+			return new Dimension(480, 380);
 		}
 	}
 
@@ -206,20 +249,29 @@ public class EditorPreferences {
 		}
 	}
 
+	/**
+	 * Saves the current known list of file paths that it knows about
+	 */
 	public void saveRecentFiles() {
-		// TODO keep local aspect or accept a list?
+		saveRecentFiles(recentFiles);
 	}
 
 	/**
 	 * Saves a given list of files as the most recent
 	 */
-	public void saveRecentFiles(ArrayList<File> files) {
+	public void saveRecentFiles(ArrayList<String> files) {
 		int max = getMaxNumberRecentFiles();
 		int numFiles = Math.min(max, files.size());
 		String prefix = FieldName.RECENT_ITEM_.getPrefName();
+
+		// Trim the list to ensure it's within limit
+		while (files.size() > numFiles) {
+			// Oldest files are considered and get dropped
+			files.remove(files.size() - 1);
+		}
 		// Store the file's absolute path with index value
 		for (int x = 0; x < numFiles; x++) {
-			prefs.put(prefix + x, files.get(x).getAbsolutePath());
+			prefs.put(prefix + x, files.get(x));
 		}
 		// Save number of files
 		prefs.putInt(FieldName.RECENT_ITEMS_NUM.getPrefName(), numFiles);
@@ -241,8 +293,8 @@ public class EditorPreferences {
 	}
 
 	/**
-	 * Save the window size from a Dimension of it. When dim is null
-	 * the preference item will be removed.
+	 * Save the window size from a Dimension of it. When dim is null the
+	 * preference item will be removed.
 	 *
 	 * @param dim the Dimension of the window to save.
 	 */
@@ -252,8 +304,7 @@ public class EditorPreferences {
 			prefs.remove(FieldName.WINDOW_SIZE.getPrefName());
 			return;
 		}
-		String strDim = dim.getWidth() + "," + dim.getHeight();
+		String strDim = dim.width + "," + dim.height;
 		prefs.put(FieldName.WINDOW_SIZE.getPrefName(), strDim);
 	}
-
 }

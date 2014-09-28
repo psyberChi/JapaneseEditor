@@ -88,33 +88,6 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
 		jMenuItemVocabAdd.addActionListener(controller);
 		jMenuItemVocabDelete.addActionListener(controller);
 		jMenuItemVocabMove.addActionListener(controller);
-
-		// TODO Preferences change listener ???
-	}
-
-	/**
-	 * Load user preferences.
-	 */
-	private void loadPreferences() {
-//		try {
-//			listSelectorCategoryLesson.getSelector().setSelectedIndex(
-//					prefs.getInt(EditorPrefs.SortMode.toString(), 0));
-//			listSelectorVocabulary.getSelector().setSelectedIndex(
-//					prefs.getInt(EditorPrefs.VocabDisplayMode.toString(), 0));
-//		}
-//		catch (Exception ex) {
-//			logger.log(Level.SEVERE, "Problem loading preference: {0}", ex.getLocalizedMessage());
-//		}
-	}
-
-	/**
-	 * Saves user settings.
-	 */
-	private void savePreferences() {
-//		prefs.putInt(EditorPrefs.SortMode.toString(),
-//				listSelectorCategoryLesson.getSelector().getSelectedIndex());
-//		prefs.putInt(EditorPrefs.VocabDisplayMode.toString(),
-//				listSelectorVocabulary.getSelector().getSelectedIndex());
 	}
 
 	/**
@@ -143,16 +116,18 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
         jPanelButtons = new javax.swing.JPanel();
         jLabelStatus = new javax.swing.JLabel();
         jMenuBar = new javax.swing.JMenuBar();
+        jMenuEditor = new javax.swing.JMenu();
+        jMenuItemPreferences = new javax.swing.JMenuItem();
+        jMenuItemExit = new javax.swing.JMenuItem();
         jMenuFile = new javax.swing.JMenu();
         jMenuItemNew = new javax.swing.JMenuItem();
         jMenuItemOpen = new javax.swing.JMenuItem();
+        jMenuRecentFiles = new javax.swing.JMenu();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
         jMenuItemSave = new javax.swing.JMenuItem();
         jMenuItemSaveAs = new javax.swing.JMenuItem();
-        jSeparator1 = new javax.swing.JPopupMenu.Separator();
-        jMenuItemPreferences = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JPopupMenu.Separator();
         jMenuItemClose = new javax.swing.JMenuItem();
-        jMenuItemExit = new javax.swing.JMenuItem();
         jMenuVocab = new javax.swing.JMenu();
         jMenuItemCatAdd = new javax.swing.JMenuItem();
         jMenuItemCatDelete = new javax.swing.JMenuItem();
@@ -204,14 +179,6 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Japanese Vocabulary Editor");
         setMinimumSize(new java.awt.Dimension(300, 300));
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowOpened(java.awt.event.WindowEvent evt) {
-                formWindowOpened(evt);
-            }
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                formWindowClosing(evt);
-            }
-        });
 
         jPanelMain.setLayout(new java.awt.BorderLayout());
 
@@ -241,6 +208,17 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
 
         getContentPane().add(jPanelButtons, java.awt.BorderLayout.SOUTH);
 
+        jMenuEditor.setText("Editor");
+
+        jMenuItemPreferences.setText("Preferences");
+        jMenuEditor.add(jMenuItemPreferences);
+
+        jMenuItemExit.setText("Exit");
+        jMenuItemExit.setActionCommand(EditorActions.Exit.name());
+        jMenuEditor.add(jMenuItemExit);
+
+        jMenuBar.add(jMenuEditor);
+
         jMenuFile.setText("File");
 
         jMenuItemNew.setText("New File");
@@ -252,6 +230,10 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
         jMenuItemOpen.setActionCommand(EditorActions.FileOpen.name());
         jMenuFile.add(jMenuItemOpen);
 
+        jMenuRecentFiles.setText("Recent Files");
+        jMenuFile.add(jMenuRecentFiles);
+        jMenuFile.add(jSeparator1);
+
         jMenuItemSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
         jMenuItemSave.setText("Save");
         jMenuItemSave.setActionCommand(EditorActions.FileSave.name());
@@ -260,19 +242,11 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
         jMenuItemSaveAs.setText("Save as");
         jMenuItemSaveAs.setActionCommand(EditorActions.FileSaveAs.name());
         jMenuFile.add(jMenuItemSaveAs);
-        jMenuFile.add(jSeparator1);
-
-        jMenuItemPreferences.setText("Preferences");
-        jMenuFile.add(jMenuItemPreferences);
         jMenuFile.add(jSeparator3);
 
         jMenuItemClose.setText("Close File");
         jMenuItemClose.setActionCommand(EditorActions.FileClose.name());
         jMenuFile.add(jMenuItemClose);
-
-        jMenuItemExit.setText("Exit");
-        jMenuItemExit.setActionCommand(EditorActions.Exit.name());
-        jMenuFile.add(jMenuItemExit);
 
         jMenuBar.add(jMenuFile);
 
@@ -305,14 +279,6 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
-		loadPreferences();
-    }//GEN-LAST:event_formWindowOpened
-
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-		savePreferences();
-    }//GEN-LAST:event_formWindowClosing
 	/**
 	 * @param args the command line arguments
 	 */
@@ -375,6 +341,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
     private javax.swing.JFileChooser jFileChooserSave;
     public javax.swing.JLabel jLabelStatus;
     private javax.swing.JMenuBar jMenuBar;
+    private javax.swing.JMenu jMenuEditor;
     private javax.swing.JMenu jMenuFile;
     public javax.swing.JMenuItem jMenuItemCatAdd;
     public javax.swing.JMenuItem jMenuItemCatDelete;
@@ -388,6 +355,7 @@ public class JapaneseVocabEditor extends javax.swing.JFrame {
     public javax.swing.JMenuItem jMenuItemVocabAdd;
     public javax.swing.JMenuItem jMenuItemVocabDelete;
     public javax.swing.JMenuItem jMenuItemVocabMove;
+    public javax.swing.JMenu jMenuRecentFiles;
     private javax.swing.JMenu jMenuVocab;
     private javax.swing.JPanel jPanelButtons;
     private javax.swing.JPanel jPanelMain;

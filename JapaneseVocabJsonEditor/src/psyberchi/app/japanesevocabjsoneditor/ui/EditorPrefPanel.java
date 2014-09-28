@@ -21,6 +21,7 @@ import java.util.prefs.Preferences;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import psyberchi.app.japanesevocabjsoneditor.model.EditorPreferences;
@@ -49,7 +50,11 @@ public final class EditorPrefPanel extends PrefPanel implements ChangeListener, 
 	 * Capture the values of the fields when first loaded to have something to
 	 * compare to when saving.
 	 */
-	private HashMap<FontItemPanel, Font> oldValues = new HashMap<>();
+	private HashMap<FontItemPanel, Font> startingFonts = new HashMap<>();
+	/**
+	 * Capture the starting values for JSpinner used for integers.
+	 */
+	private HashMap<JSpinner, Integer> startingInts = new HashMap<>();
 	/**
 	 * Keeps a mapping between font item panel and preference name for it
 	 */
@@ -61,8 +66,6 @@ public final class EditorPrefPanel extends PrefPanel implements ChangeListener, 
 	public EditorPrefPanel() {
 		initComponents();
 		editorPrefs = new EditorPreferences(prefs);
-		loadPreferences();
-		configure();
 	}
 
 	/**
@@ -70,23 +73,13 @@ public final class EditorPrefPanel extends PrefPanel implements ChangeListener, 
 	 * opens, which will later be used to determine whether or not a preference
 	 * has changed and if it needs saving or not.
 	 */
-	private void configure() {
-		fontFieldMap.put(fontItemPanelListSortMode, FieldName.FONT_LIST_SORTMODE);
-		fontFieldMap.put(fontItemPanelListEnglish, FieldName.FONT_LIST_ENGLISH);
-		fontFieldMap.put(fontItemPanelListRomaji, FieldName.FONT_LIST_ROMAJI);
-		fontFieldMap.put(fontItemPanelListKana, FieldName.FONT_LIST_KANA);
-		fontFieldMap.put(fontItemPanelListKanji, FieldName.FONT_LIST_KANJI);
-		fontFieldMap.put(fontItemPanelEditorEnglish, FieldName.FONT_EDITOR_ENGLISH);
-		fontFieldMap.put(fontItemPanelEditorRomaji, FieldName.FONT_EDITOR_ROMAJI);
-		fontFieldMap.put(fontItemPanelEditorKana, FieldName.FONT_EDITOR_KANA);
-		fontFieldMap.put(fontItemPanelEditorKanji, FieldName.FONT_EDITOR_KANJI);
-
-		// Add listeners an store starting values
+	private void collectStartValues() {
+		// Store starting values
 		for (Map.Entry<FontItemPanel, FieldName> p : fontFieldMap.entrySet()) {
-			p.getKey().jComboBoxFontFamily.addItemListener(this);
-			p.getKey().jSpinnerFontSize.addChangeListener(this);
-			oldValues.put(p.getKey(), p.getKey().getFontItem());
+			startingFonts.put(p.getKey(), p.getKey().getFontItem());
 		}
+		startingInts.put(jSpinnerMaxRecent,
+				((SpinnerNumberModel) jSpinnerMaxRecent.getModel()).getNumber().intValue());
 	}
 
 	@Override
@@ -102,7 +95,29 @@ public final class EditorPrefPanel extends PrefPanel implements ChangeListener, 
 	 * @return
 	 */
 	private boolean hasChanged(FontItemPanel c) {
-		return !oldValues.get(c).equals(c.getFontItem());
+		return !startingFonts.get(c).equals(c.getFontItem());
+	}
+
+	/**
+	 * Initialization needed for the preferences.
+	 */
+	private void initPrefs() {
+		// Build map between font fields and their preference constant
+		fontFieldMap.put(fontItemPanelListSortMode, FieldName.FONT_LIST_SORTMODE);
+		fontFieldMap.put(fontItemPanelListEnglish, FieldName.FONT_LIST_ENGLISH);
+		fontFieldMap.put(fontItemPanelListRomaji, FieldName.FONT_LIST_ROMAJI);
+		fontFieldMap.put(fontItemPanelListKana, FieldName.FONT_LIST_KANA);
+		fontFieldMap.put(fontItemPanelListKanji, FieldName.FONT_LIST_KANJI);
+		fontFieldMap.put(fontItemPanelEditorEnglish, FieldName.FONT_EDITOR_ENGLISH);
+		fontFieldMap.put(fontItemPanelEditorRomaji, FieldName.FONT_EDITOR_ROMAJI);
+		fontFieldMap.put(fontItemPanelEditorKana, FieldName.FONT_EDITOR_KANA);
+		fontFieldMap.put(fontItemPanelEditorKanji, FieldName.FONT_EDITOR_KANJI);
+
+		// Add listeners
+		for (Map.Entry<FontItemPanel, FieldName> p : fontFieldMap.entrySet()) {
+			p.getKey().jComboBoxFontFamily.addItemListener(this);
+			p.getKey().jSpinnerFontSize.addChangeListener(this);
+		}
 	}
 
 	@Override
@@ -120,20 +135,30 @@ public final class EditorPrefPanel extends PrefPanel implements ChangeListener, 
 	@Override
 	public void loadPreferences() {
 		logger.log(Level.INFO, "Loading preferences from Editor prefs");
+		initPrefs();
+
 		try {
 			// load list fonts
 			Font f;
 			for (Map.Entry<FontItemPanel, FieldName> p : fontFieldMap.entrySet()) {
 				f = editorPrefs.getFontPref(p.getValue());
 				p.getKey().setFontItem(f);
-				logger.log(Level.INFO, "{2}: {0}:{1}", new Object[]{
+				logger.log(Level.INFO, "Loaded {2}: {0}:{1}", new Object[]{
 					f.getFamily(), f.getSize(), p.getValue().getPrefName()
 				});
 			}
+			// Load max recent files
+			int max = editorPrefs.getMaxNumberRecentFiles();
+			jSpinnerMaxRecent.getModel().setValue(max);
+			logger.log(Level.INFO, "Loaded {0}: {1}", new Object[]{
+				FieldName.RECENT_MAX.getPrefName(), max});
 		}
 		catch (Exception ex) {
 			logger.log(Level.INFO, "Exception while loading preferences: {0}", ex.getLocalizedMessage());
 		}
+
+		// Load local variables
+		collectStartValues();
 	}
 
 	@Override
@@ -144,12 +169,18 @@ public final class EditorPrefPanel extends PrefPanel implements ChangeListener, 
 			// Only care about items that have actually been motified
 			if (hasChanged(p.getKey())) {
 				editorPrefs.saveFontPref(p.getValue(), p.getKey().getFontItem());
-				logger.log(Level.INFO, "{2}: {0}:{1}", new Object[]{
+				logger.log(Level.INFO, "Saved {2}: {0}:{1}", new Object[]{
 					p.getKey().getFontItem().getFamily(),
 					p.getKey().getFontItem().getSize(),
 					p.getValue().getPrefName()
 				});
 			}
+		}
+		// Save max recent files if it has changed
+		int max = ((SpinnerNumberModel) jSpinnerMaxRecent.getModel()).getNumber().intValue();
+		if (max != startingInts.get(jSpinnerMaxRecent)) {
+			editorPrefs.saveMaxRecentFiles(max);
+			logger.log(Level.INFO, "Saved Max Recent Files: {0}", max);
 		}
 	}
 
@@ -193,6 +224,9 @@ public final class EditorPrefPanel extends PrefPanel implements ChangeListener, 
 
         jScrollPane = new javax.swing.JScrollPane();
         jPanelMain = new javax.swing.JPanel();
+        jPanelMisc = new javax.swing.JPanel();
+        jLabelMaxRecent = new javax.swing.JLabel();
+        jSpinnerMaxRecent = new javax.swing.JSpinner();
         jPanelListFonts = new javax.swing.JPanel();
         fontItemPanelListSortMode = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
         fontItemPanelListEnglish = new psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel();
@@ -210,6 +244,14 @@ public final class EditorPrefPanel extends PrefPanel implements ChangeListener, 
         setLayout(new java.awt.BorderLayout());
 
         jPanelMain.setLayout(new javax.swing.BoxLayout(jPanelMain, javax.swing.BoxLayout.PAGE_AXIS));
+
+        jLabelMaxRecent.setText("Max Recent Files:");
+        jPanelMisc.add(jLabelMaxRecent);
+
+        jSpinnerMaxRecent.setModel(new javax.swing.SpinnerNumberModel(6, 0, 30, 1));
+        jPanelMisc.add(jSpinnerMaxRecent);
+
+        jPanelMain.add(jPanelMisc);
 
         jPanelListFonts.setBorder(javax.swing.BorderFactory.createTitledBorder("List Fonts"));
         jPanelListFonts.setLayout(new javax.swing.BoxLayout(jPanelListFonts, javax.swing.BoxLayout.PAGE_AXIS));
@@ -274,10 +316,13 @@ public final class EditorPrefPanel extends PrefPanel implements ChangeListener, 
     private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelListRomaji;
     private psyberchi.app.japanesevocabjsoneditor.ui.FontItemPanel fontItemPanelListSortMode;
     private javax.swing.JLabel jLabelFontLook;
+    private javax.swing.JLabel jLabelMaxRecent;
     private javax.swing.JPanel jPanelEditorFonts;
     private javax.swing.JPanel jPanelFontLook;
     private javax.swing.JPanel jPanelListFonts;
     private javax.swing.JPanel jPanelMain;
+    private javax.swing.JPanel jPanelMisc;
     private javax.swing.JScrollPane jScrollPane;
+    private javax.swing.JSpinner jSpinnerMaxRecent;
     // End of variables declaration//GEN-END:variables
 }

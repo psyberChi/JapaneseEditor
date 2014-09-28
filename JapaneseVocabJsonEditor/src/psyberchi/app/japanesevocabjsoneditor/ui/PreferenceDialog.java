@@ -25,9 +25,9 @@ public class PreferenceDialog extends javax.swing.JDialog {
 
 		// Add my preference panel
 		EditorPrefPanel editor = new EditorPrefPanel();
-//		editor.addPropertyChangeListener(null);
 		prefPanels.add(editor);
 		jTabbedPane.addTab("Editor", editor);
+		editor.loadPreferences();
 	}
 
 	/**

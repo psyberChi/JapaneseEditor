@@ -250,6 +250,16 @@ public class EditorPreferences {
 	}
 
 	/**
+	 * Saves the given max as the maximum number of recent files to show in the
+	 * recent file menu.
+	 *
+	 * @param max number of files to remember at most
+	 */
+	public void saveMaxRecentFiles(int max) {
+		prefs.putInt(EditorPreferences.FieldName.RECENT_MAX.getPrefName(), max);
+	}
+
+	/**
 	 * Saves the current known list of file paths that it knows about
 	 */
 	public void saveRecentFiles() {

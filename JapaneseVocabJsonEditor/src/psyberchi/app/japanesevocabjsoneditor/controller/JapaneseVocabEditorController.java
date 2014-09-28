@@ -1305,7 +1305,6 @@ public class JapaneseVocabEditorController implements ActionListener, ChangeList
 	 * Updates the recent file menu with the known recent files.
 	 */
 	private void updateRecentFileMenu() {
-		// TODO test
 		ArrayList<String> filePaths = prefs.getRecentFiles();
 		// Clear menu to ensure we won't have duplicates
 		vocabEditor.jMenuRecentFiles.removeAll();

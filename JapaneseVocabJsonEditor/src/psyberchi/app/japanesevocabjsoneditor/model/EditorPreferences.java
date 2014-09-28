@@ -29,7 +29,6 @@ public class EditorPreferences {
 	 */
 	private static final Logger logger = Logger.getLogger(EditorPreferences.class.getCanonicalName());
 	private ArrayList<String> recentFiles = new ArrayList<>();
-	private int maxRecent = 5;
 
 	public static enum FieldName {
 		FONT_LIST_SORTMODE,
@@ -45,7 +44,8 @@ public class EditorPreferences {
 		RECENT_ITEMS_NUM,
 		RECENT_ITEM_,
 		WINDOW_POSITION,
-		WINDOW_SIZE;
+		WINDOW_SIZE,
+		WINDOW_SEPARATOR_POS;
 
 		/**
 		 * Returns the preference name to be used for the field.
@@ -119,23 +119,41 @@ public class EditorPreferences {
 			return false;
 		}
 		// If it is already in the list remove it first so it can be added to the
-		// end of the list to make it more recent
+		// start of the list to make it more recent
 		if (recentFiles.contains(path)) {
 			recentFiles.remove(path);
 		}
-		recentFiles.add(path);
+		recentFiles.add(0, path);
 		saveRecentFiles();
 		return true;
 	}
 
+	/**
+	 * Retrieves the font size for a given FieldName.
+	 *
+	 * @param p the field of the font size to retrieve
+	 * @return
+	 */
 	private int getFontSize(FieldName p) {
 		return prefs.getInt(p.getPrefName(), FieldName.getDefaultFontSize(p));
 	}
 
+	/**
+	 * Retrieves the font name for a given FieldName.
+	 *
+	 * @param p the field of the font name to retrieve
+	 * @return
+	 */
 	private String getFontName(FieldName p) {
 		return prefs.get(p.getPrefName(), FieldName.getDefaultFontName(p));
 	}
 
+	/**
+	 * Retrieves the font for a given FieldName.
+	 *
+	 * @param p the field of the font to retrieve
+	 * @return
+	 */
 	public Font getFontPref(FieldName p) {
 		String defaultName = getFontName(p);
 		int defaultSize = getFontSize(p);
@@ -149,7 +167,7 @@ public class EditorPreferences {
 	 * Gets the maximum number of recent files to remember.
 	 */
 	public int getMaxNumberRecentFiles() {
-		int max = prefs.getInt(FieldName.RECENT_MAX.getPrefName(), 10);
+		int max = prefs.getInt(FieldName.RECENT_MAX.getPrefName(), 6);
 		return max;
 	}
 
@@ -213,7 +231,7 @@ public class EditorPreferences {
 		}
 		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Could not read window size: {0}", ex.getLocalizedMessage());
-			return new Dimension(300, 340);
+			return new Dimension(480, 380);
 		}
 	}
 
@@ -248,8 +266,8 @@ public class EditorPreferences {
 
 		// Trim the list to ensure it's within limit
 		while (files.size() > numFiles) {
-			// Oldest files are considered add the head and get dropped
-			files.remove(0);
+			// Oldest files are considered and get dropped
+			files.remove(files.size() - 1);
 		}
 		// Store the file's absolute path with index value
 		for (int x = 0; x < numFiles; x++) {
